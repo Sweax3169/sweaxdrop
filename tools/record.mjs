@@ -74,7 +74,6 @@ async function click(sel) {
     await page.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: p.x, y: p.y }] });
     await sleep(70);
     await page.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    await page.eval(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); e && e.click(); })()`);
   } else {
     await page.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: p.x, y: p.y, button: 'left', clickCount: 1 });
     await sleep(70);
@@ -86,8 +85,10 @@ const ev = (js) => page.eval(js);
 async function record(fn, name) {
   frames.length = 0;
   await page.send('Page.startScreencast', { format: 'jpeg', quality: 92, everyNthFrame: 1 });
+  const started = Date.now();
   await fn();
   await page.send('Page.stopScreencast');
+  console.log('scenario', (Date.now() - started) / 1000, 's; frames span', frames.length ? frames[frames.length - 1].t - frames[0].t : 0, 's');
   await sleep(200);
   encode(name);
 }
@@ -109,7 +110,7 @@ function encode(name) {
   execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', lst, '-vf', `fps=30,scale=${w}:-2:flags=lanczos,format=yuv420p`, '-c:v', 'libx264', '-preset', 'slow', '-crf', '20', '-movflags', '+faststart', mp4]);
   const gw = phone ? 360 : 860;
   const gif = join(out, `${name}.gif`);
-  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', mp4, '-vf', `fps=15,scale=${gw}:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=160:stats_mode=diff[p];[b][p]paletteuse=dither=sierra2_4a:diff_mode=rectangle`, gif]);
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', mp4, '-vf', `setpts=PTS/1.25,fps=15,scale=${gw}:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=160:stats_mode=diff[p];[b][p]paletteuse=dither=sierra2_4a:diff_mode=rectangle`, gif]);
   for (const f of readdirSync(frameDir)) rmSync(join(frameDir, f));
   console.log('wrote', mp4, gif, frames.length, 'frames');
 }

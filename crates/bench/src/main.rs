@@ -98,6 +98,13 @@ enum Cmd {
         #[arg(long)]
         out: Option<PathBuf>,
     },
+    /// Times creating many small files on this disk, several ways (diagnostics).
+    Fstest {
+        #[arg(long)]
+        dir: PathBuf,
+        #[arg(long, default_value_t = 5000)]
+        files: usize,
+    },
     /// Sends with the LocalSend v2 protocol to a running LocalSend app.
     Localsend {
         #[arg(long)]
@@ -249,6 +256,20 @@ fn loopback_case(case: &str, paths: &[PathBuf], bytes: u64, streams: u8, tr: Tra
     let b = host("bench-bb", 0, cipher, !disk, Some(&save))?;
     pair(&a, &b);
     let opts = EngineOpts { streams, chunk: chunk_mib << 20, piece: 512 << 10, transport: tr };
+    // One unrecorded transfer of 64 small files first. A long-running app pays
+    // its one-time costs (thread pools, connections, and Windows Defender's
+    // look at a process's first file writes) once; a fresh benchmark process
+    // would otherwise pay them inside the first measured run.
+    let warm: Vec<SourceItem> = (0..64)
+        .map(|i| SourceItem {
+            item: Item { id: i, path: format!("warmup/w{i:02}.bin"), size: 32 << 10, mtime: None, mime: None, dir: false },
+            src: Source::Synthetic { seed: i as u64 },
+        })
+        .collect();
+    loopback_once(&a, &b, warm, opts)?;
+    if disk {
+        let _ = std::fs::remove_dir_all(&save);
+    }
     let (mut secs, mut ttfbs, mut cpus) = (vec![], vec![], vec![]);
     let (mut total, mut files) = (0, 0);
     for _ in 0..repeat {
@@ -447,6 +468,7 @@ fn main() -> Result<()> {
             }
             Ok(())
         }
+        Cmd::Fstest { dir, files } => fstest(&dir, files),
         Cmd::Localsend { to, path, concurrency, http, repeat, label, out } => {
             let rt = tokio::runtime::Runtime::new()?;
             let run = rt.block_on(localsend::bench(&to, &path, concurrency, !http, repeat, label))?;
@@ -457,4 +479,57 @@ fn main() -> Result<()> {
             Ok(())
         }
     }
+}
+
+fn fstest(dir: &Path, n: usize) -> Result<()> {
+    use std::io::Write;
+    use sweaxdrop_core::storage::{FsSink, Sink};
+    let data = vec![7u8; 33_000];
+    for threads in [1usize, 4, 16] {
+        for mode in ["plain", "exists+mtime", "fssink"] {
+            let root = dir.join(format!("fs-{mode}-{threads}"));
+            let _ = std::fs::remove_dir_all(&root);
+            for d in 0..100 {
+                std::fs::create_dir_all(root.join(format!("d{d:02}")))?;
+            }
+            let sink = Arc::new(FsSink::new(root.clone()));
+            let next = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+            let t0 = Instant::now();
+            std::thread::scope(|sc| {
+                for _ in 0..threads {
+                    let (next, root, data, sink) = (next.clone(), root.clone(), &data, sink.clone());
+                    sc.spawn(move || loop {
+                        let i = next.fetch_add(1, Ordering::Relaxed);
+                        if i >= n {
+                            return;
+                        }
+                        let rel = format!("d{:02}/f{i:05}.dat", i % 100);
+                        match mode {
+                            "plain" => {
+                                let mut f = std::fs::File::create_new(root.join(&rel)).unwrap();
+                                f.write_all(data).unwrap();
+                            }
+                            "exists+mtime" => {
+                                let p = root.join(&rel);
+                                let _ = p.exists();
+                                let mut f = std::fs::OpenOptions::new().write(true).create_new(true).open(&p).unwrap();
+                                f.write_all(data).unwrap();
+                                let _ = f.set_modified(std::time::UNIX_EPOCH + Duration::from_secs(1_700_000_000));
+                            }
+                            _ => {
+                                let it = Item { id: i as u32, path: rel, size: data.len() as u64, mtime: Some(1_700_000_000_000), mime: None, dir: false };
+                                let out = sink.create(&it, "t", "s").unwrap();
+                                out.write_at(data, 0).unwrap();
+                                out.finish(it.mtime).unwrap();
+                            }
+                        }
+                    });
+                }
+            });
+            let dt = t0.elapsed().as_secs_f64();
+            println!("{threads:>2} threads {mode:<13} {:>6.2} s  {:>6.3} ms/file", dt, dt * 1000.0 / n as f64);
+            let _ = std::fs::remove_dir_all(&root);
+        }
+    }
+    Ok(())
 }

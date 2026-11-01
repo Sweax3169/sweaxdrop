@@ -1,7 +1,7 @@
 // Drives the real Windows app through its WebView: starts it hidden with a
 // throwaway data folder (loopback only), starts a headless peer, sends a
 // folder and a message to it, and saves a screenshot of the window contents.
-//   node tools/smoke-desktop.mjs <sweaxdrop.exe> <sweaxdrop-bench.exe> <outDir>
+//   node tools/smoke-desktop.mjs <sweaxdrop.exe> <sweaxdrop-bench.exe> <outDir> [en|tr]
 
 import { spawn } from 'node:child_process';
 import { mkdirSync, mkdtempSync, writeFileSync, readdirSync, rmSync } from 'node:fs';
@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { connect } from './cdp.mjs';
 
-const [exe, bench, out = 'smoke-out'] = process.argv.slice(2);
+const [exe, bench, out = 'smoke-out', lang] = process.argv.slice(2);
 mkdirSync(out, { recursive: true });
 const root = mkdtempSync(join(tmpdir(), 'swx-smoke-'));
 const peerInbox = join(root, 'peer-inbox');
@@ -36,6 +36,20 @@ try {
     } catch {}
     await new Promise((r) => setTimeout(r, 250));
   }
+  const ready = async () => {
+    for (let i = 0; i < 60; i++) {
+      try {
+        if (await page.eval(`!!(window.__TAURI__ && document.querySelector('.shell'))`)) return;
+      } catch {}
+      await new Promise((r) => setTimeout(r, 250));
+    }
+  };
+  if (lang) {
+    await call({ cmd: 'settings_set', patch: { lang, name: 'Studio PC' } });
+    await page.eval('location.reload()').catch(() => {});
+    await new Promise((r) => setTimeout(r, 500));
+    await ready();
+  }
   const st = await call({ cmd: 'state' });
   console.log('app device', st.device.name, st.device.pretty_id, 'port', st.device.port);
   const added = await call({ cmd: 'add_address', address: '127.0.0.1:47911' });
@@ -61,7 +75,7 @@ try {
   const ui = await page.eval(`({ tiles: document.querySelectorAll('[data-peer]').length, cards: document.querySelectorAll('article.card').length, title: document.title })`);
   console.log('ui', JSON.stringify(ui));
   await page.send('Emulation.setDeviceMetricsOverride', { width: 1080, height: 720, deviceScaleFactor: 1, mobile: false });
-  await page.shot(join(out, 'desktop-smoke.png'));
+  await page.shot(join(out, lang ? `desktop-smoke-${lang}.png` : 'desktop-smoke.png'));
   page.close();
 } catch (e) {
   console.error('SMOKE FAILED', e);

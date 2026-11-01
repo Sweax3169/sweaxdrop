@@ -90,10 +90,22 @@ def font_face(family, file, weight, text, wdth=None):
     return css
 
 
+LATIN_RANGE = 'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD'
+EXT_RANGE = 'U+0100-0130,U+0132-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF'
+
+
 def fonts_for(texts_by_style):
     css = []
     for (family, file, weight, wdth), text in texts_by_style.items():
-        css.append(font_face(family, file, weight, text, wdth))
+        if family == 'Bric':
+            # Fontsource splits the font by script: basic Latin and Latin
+            # Extended (ğ ş İ …) are separate files. Embed both, each with its range.
+            css.append(font_face(family, BRIC_L, weight, text, wdth).replace("format('woff2')}", "format('woff2');unicode-range:" + LATIN_RANGE + "}"))
+            ext = ''.join(ch for ch in text if 0x100 <= ord(ch) <= 0x2AF)
+            if ext:
+                css.append(font_face(family, BRIC, weight, ext, wdth).replace("format('woff2')}", "format('woff2');unicode-range:" + EXT_RANGE + "}"))
+        else:
+            css.append(font_face(family, file, weight, text, wdth))
     return '\n'.join(css)
 
 

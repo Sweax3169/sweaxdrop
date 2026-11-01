@@ -29,7 +29,7 @@
           {#if web}
             {app.web?.device ? t('Connected to {name}', { name: app.web.device.name }) : t('Connecting to the computer…')}
           {:else}
-            {app.device.name}{#if app.wide} · <span class="num">{app.device.pretty_id?.slice(0, 9)}</span>{/if}
+            {app.device.name}{#if app.wide}{' · '}<span class="num">{app.device.pretty_id?.slice(0, 9)}</span>{/if}
           {/if}
         </span>
       {/if}

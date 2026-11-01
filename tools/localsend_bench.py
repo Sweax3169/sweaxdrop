@@ -32,7 +32,7 @@ ap.add_argument('--bench')
 ap.add_argument('--folder')
 ap.add_argument('--concurrency', type=int, default=2)
 ap.add_argument('files', nargs='*')
-a = ap.parse_args()
+a = ap.parse_intermixed_args()
 
 files = list(a.files)
 if a.folder:
@@ -142,10 +142,10 @@ print(json.dumps({
     'ttfb_ms': (first or secs) * 1000, 'mb_s': total / secs / 1e6, 'answered_ms': (answered or 0) * 1000,
     'complete': n >= len(files) and size >= total,
 }), flush=True)
-if isinstance(sender, PtyProcess):
-    sender.terminate(force=True)
-else:
-    sender.terminate()
-r.terminate(force=True)
+for p in (sender, r):
+    try:
+        p.terminate(force=True) if isinstance(p, PtyProcess) else p.terminate()
+    except Exception:
+        pass
 time.sleep(0.5)
 shutil.rmtree(dest, ignore_errors=True)

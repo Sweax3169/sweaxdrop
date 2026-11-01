@@ -1,0 +1,166 @@
+{
+ "version": "1.0.0",
+ "machine": "AMD Ryzen 5 7600, NVMe SSD, Windows 11; both programs on this PC, same files, same drive",
+ "cases": [
+  {
+   "key": "4 GiB file",
+   "name": "One 4 GiB file",
+   "name_tr": "Tek 4 GiB dosya",
+   "what": "A long video or a disk image.",
+   "what_tr": "Uzun bir video ya da disk kalıbı.",
+   "sweaxdrop": {
+    "mb_s": 426.34356418394253,
+    "seconds": 13.57428165,
+    "ttfb_ms": 18.174599999999998,
+    "runs": 4
+   },
+   "localsend": {
+    "mb_s": 318.7120906008598,
+    "seconds": 13.556177149992436,
+    "ttfb_ms": 39.534199982881546,
+    "runs": 4,
+    "tool": "localsend-cli-1.18.2"
+   },
+   "localsend_cli": {
+    "mb_s": 318.7120906008598,
+    "seconds": 13.556177149992436,
+    "ttfb_ms": 39.534199982881546,
+    "runs": 4,
+    "tool": "localsend-cli-1.18.2"
+   },
+   "localsend_proto": {
+    "mb_s": 408.96565969710275,
+    "seconds": 10.502024299988989,
+    "ttfb_ms": 72.58909998927265,
+    "runs": 1,
+    "tool": "localsend-cli-1.18.2 receiver, LocalSend v2 sender (2 at a time)"
+   },
+   "localsend_sender": "official CLI",
+   "ratio": 0.998666264596951
+  },
+  {
+   "key": "200 photos (723 MB)",
+   "name": "200 photos, 723 MB",
+   "name_tr": "200 fotoğraf, 723 MB",
+   "what": "A camera roll: 3–6 MB each.",
+   "what_tr": "Bir galeri: her biri 3–6 MB.",
+   "sweaxdrop": {
+    "mb_s": 1193.9882350895716,
+    "seconds": 0.6363197,
+    "ttfb_ms": 21.859949999999998,
+    "runs": 4
+   },
+   "localsend": {
+    "mb_s": 247.5269887879853,
+    "seconds": 3.080245150020346,
+    "ttfb_ms": 63.361600012285635,
+    "runs": 4,
+    "tool": "localsend-cli-1.18.2"
+   },
+   "localsend_cli": {
+    "mb_s": 247.5269887879853,
+    "seconds": 3.080245150020346,
+    "ttfb_ms": 63.361600012285635,
+    "runs": 4,
+    "tool": "localsend-cli-1.18.2"
+   },
+   "localsend_proto": null,
+   "localsend_sender": "official CLI",
+   "ratio": 4.840719452847909
+  },
+  {
+   "key": "10 000 small files (338 MB)",
+   "name": "10 000 small files, 338 MB",
+   "name_tr": "10 000 küçük dosya, 338 MB",
+   "what": "A project folder or a chat export: 1–64 KB each, in 100 folders.",
+   "what_tr": "Bir proje klasörü ya da sohbet dışa aktarımı: her biri 1–64 KB, 100 klasörde.",
+   "sweaxdrop": {
+    "mb_s": 71.60576671912736,
+    "seconds": 5.23863825,
+    "ttfb_ms": 29.65635,
+    "runs": 4
+   },
+   "localsend": {
+    "mb_s": 22.5076588138509,
+    "seconds": 15.620046600000933,
+    "ttfb_ms": 178.63620002754033,
+    "runs": 4,
+    "tool": "localsend-cli-1.18.2 receiver, LocalSend v2 sender (2 at a time)"
+   },
+   "localsend_cli": null,
+   "localsend_proto": {
+    "mb_s": 22.5076588138509,
+    "seconds": 15.620046600000933,
+    "ttfb_ms": 178.63620002754033,
+    "runs": 4,
+    "tool": "localsend-cli-1.18.2 receiver, LocalSend v2 sender (2 at a time)"
+   },
+   "localsend_sender": "LocalSend v2 protocol sender (2 at a time) to the official CLI receiver",
+   "ratio": 2.9816997957438525
+  },
+  {
+   "key": "300 small files",
+   "name": "300 small files",
+   "name_tr": "300 küçük dosya",
+   "what": "The same kind of files, few enough for LocalSend’s own command-line sender.",
+   "what_tr": "Aynı türde dosyalar; LocalSend’in kendi komut satırı göndericisine sığacak kadar az.",
+   "sweaxdrop": {
+    "mb_s": 75.77073859092148,
+    "seconds": 0.12763000000000002,
+    "ttfb_ms": 16.796,
+    "runs": 4
+   },
+   "localsend": {
+    "mb_s": 22.332424300763215,
+    "seconds": 0.4294145999883767,
+    "ttfb_ms": 128.76439999672584,
+    "runs": 4,
+    "tool": "localsend-cli-1.18.2 receiver, LocalSend v2 sender (2 at a time)"
+   },
+   "localsend_cli": {
+    "mb_s": 8.922515362386486,
+    "seconds": 1.6679587499820627,
+    "ttfb_ms": 73.04814999224618,
+    "runs": 4,
+    "tool": "localsend-cli-1.18.2"
+   },
+   "localsend_proto": {
+    "mb_s": 22.332424300763215,
+    "seconds": 0.4294145999883767,
+    "ttfb_ms": 128.76439999672584,
+    "runs": 4,
+    "tool": "localsend-cli-1.18.2 receiver, LocalSend v2 sender (2 at a time)"
+   },
+   "localsend_sender": "LocalSend v2 protocol sender (2 at a time) to the official CLI receiver",
+   "ratio": 3.3645271486983988
+  }
+ ],
+ "cross_check": {
+  "300 small files": {
+   "mb_s": 22.332424300763215,
+   "seconds": 0.4294145999883767,
+   "ttfb_ms": 128.76439999672584,
+   "runs": 4,
+   "tool": "localsend-cli-1.18.2 receiver, LocalSend v2 sender (2 at a time)"
+  },
+  "10 000 small files (338 MB)": {
+   "mb_s": 22.5076588138509,
+   "seconds": 15.620046600000933,
+   "ttfb_ms": 178.63620002754033,
+   "runs": 4,
+   "tool": "localsend-cli-1.18.2 receiver, LocalSend v2 sender (2 at a time)"
+  },
+  "4 GiB file": {
+   "mb_s": 408.96565969710275,
+   "seconds": 10.502024299988989,
+   "ttfb_ms": 72.58909998927265,
+   "runs": 1,
+   "tool": "localsend-cli-1.18.2 receiver, LocalSend v2 sender (2 at a time)"
+  }
+ },
+ "tables": {
+  "en": "| Files | SweaxDrop 1.0.0 | LocalSend 1.18.2 (CLI) | LocalSend 1.18.2 (protocol sender) | SweaxDrop is |\n|---|---|---|---|---|\n| One 4 GiB file | **13.57 s** | 13.56 s | 10.50 s (1 run) | about the same |\n| 200 photos, 723 MB | **0.64 s** | 3.08 s | — | **4.8× faster** |\n| 10 000 small files, 338 MB | **5.24 s** | — | 15.62 s | **3.0× faster** |\n| 300 small files | **0.13 s** | 1.67 s | 0.43 s | **3.4× faster** |",
+  "tr": "| Dosyalar | SweaxDrop 1.0.0 | LocalSend 1.18.2 (CLI) | LocalSend 1.18.2 (protokol göndericisi) | SweaxDrop |\n|---|---|---|---|---|\n| Tek 4 GiB dosya | **13,57 sn** | 13,56 sn | 10,50 sn (1 ölçüm) | yaklaşık aynı |\n| 200 fotoğraf, 723 MB | **0,64 sn** | 3,08 sn | — | **4,8 kat hızlı** |\n| 10 000 küçük dosya, 338 MB | **5,24 sn** | — | 15,62 sn | **3,0 kat hızlı** |\n| 300 küçük dosya | **0,13 sn** | 1,67 sn | 0,43 sn | **3,4 kat hızlı** |"
+ },
+ "network": "| Transport | Cipher | Lanes | Throughput | CPU (both ends) |\n|---|---|---|---|---|\n| TCP | AES-128-GCM | 1 | 1,080 MB/s | 1.9 s per GB |\n| TCP | AES-128-GCM | 2 | 1,374 MB/s | 1.8 s per GB |\n| TCP | AES-128-GCM | 4 | 3,063 MB/s | 1.8 s per GB |\n| TCP | AES-128-GCM | 8 | 3,533 MB/s | 1.9 s per GB |\n| QUIC | AES-128-GCM | 1 | 225 MB/s | 9.8 s per GB |\n| QUIC | AES-128-GCM | 2 | 188 MB/s | 10.7 s per GB |\n| QUIC | AES-128-GCM | 4 | 213 MB/s | 10.8 s per GB |\n| QUIC | AES-128-GCM | 8 | 199 MB/s | 10.7 s per GB |\n| TCP | ChaCha20-Poly1305 | 4 | 2,300 MB/s | 2.3 s per GB |"
+}

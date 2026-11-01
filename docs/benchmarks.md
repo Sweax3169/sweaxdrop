@@ -43,19 +43,60 @@ LocalSend 1.18's two uploads at a time. It does not hash files first, so it is a
 least as fast as LocalSend's own sender. Where both senders can be used (the 4 GiB
 file, 300 files) both were run as a cross-check.
 
-**Runs.** Three runs per case, median reported. Received files are deleted between
-runs.
+**Same drive for the programs, too.** Both executables run from the same NVMe
+drive as the data. This matters on Windows more than one would think: the same
+`sweaxdrop-bench.exe` created small files 4–7 times slower when it was started
+from a hard disk (`D:`) than from the SSD, even though the files themselves were
+written to the SSD in both cases (`sweaxdrop-bench fstest` measures this). An
+early run that started SweaxDrop from the hard disk and LocalSend from the SSD
+made SweaxDrop look slower on 10 000 files; it was discarded.
+
+**Warm-up.** The first run of a freshly copied executable was much slower than the
+ones after it (23.6 s against 3.9 s for the 10 000 files; most likely Windows
+Defender examining the new binary), so each program does one unrecorded run
+first. Inside each SweaxDrop measurement process, one unrecorded transfer of 64
+small files goes first as well: an app that stays open pays its one-time costs
+(thread pools, the first file writes of a new process) once, and without this
+the first measured run of each process paid them (0.67 s against 0.10–0.13 s
+for the same 300 files).
+
+**Order and rounds.** The PC had other applications open, so the cases run in
+four rounds. Rounds alternate which program goes first (SweaxDrop then LocalSend,
+then LocalSend then SweaxDrop), and every run is followed by 8 seconds of rest
+so the drive finishes writing before the next one starts. The median of the four
+runs is reported. Received files are deleted between runs.
 
 ## Results
 
-<!-- RESULTS -->
+<!-- RESULTS:START -->
+| Files | SweaxDrop 1.0.0 | LocalSend 1.18.2 (CLI) | LocalSend 1.18.2 (protocol sender) | SweaxDrop is |
+|---|---|---|---|---|
+| One 4 GiB file | **13.57 s** | 13.56 s | 10.50 s (1 run) | about the same |
+| 200 photos, 723 MB | **0.64 s** | 3.08 s | — | **4.8× faster** |
+| 10 000 small files, 338 MB | **5.24 s** | — | 15.62 s | **3.0× faster** |
+| 300 small files | **0.13 s** | 1.67 s | 0.43 s | **3.4× faster** |
+
+Every run, in order, is in `bench/results/compare.json` (SweaxDrop) and `bench/results/localsend.jsonl` (LocalSend).
+<!-- RESULTS:END -->
 
 ## TCP or QUIC
 
 Network path only (the sender generates the bytes, the receiver verifies and
 discards them), 2 GiB, `sweaxdrop-bench loopback`, median of three:
 
-<!-- TRANSPORT -->
+<!-- TRANSPORT:START -->
+| Transport | Cipher | Lanes | Throughput | CPU (both ends) |
+|---|---|---|---|---|
+| TCP | AES-128-GCM | 1 | 1,080 MB/s | 1.9 s per GB |
+| TCP | AES-128-GCM | 2 | 1,374 MB/s | 1.8 s per GB |
+| TCP | AES-128-GCM | 4 | 3,063 MB/s | 1.8 s per GB |
+| TCP | AES-128-GCM | 8 | 3,533 MB/s | 1.9 s per GB |
+| QUIC | AES-128-GCM | 1 | 225 MB/s | 9.8 s per GB |
+| QUIC | AES-128-GCM | 2 | 188 MB/s | 10.7 s per GB |
+| QUIC | AES-128-GCM | 4 | 213 MB/s | 10.8 s per GB |
+| QUIC | AES-128-GCM | 8 | 199 MB/s | 10.7 s per GB |
+| TCP | ChaCha20-Poly1305 | 4 | 2,300 MB/s | 2.3 s per GB |
+<!-- TRANSPORT:END -->
 
 QUIC (quinn) on Windows is CPU-bound in user space; TCP gets checksum offload and
 large sends from the kernel. TCP lanes are the default; QUIC stays available in

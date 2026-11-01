@@ -63,15 +63,20 @@ def main():
     for key, en, tr, what, what_tr in CASES:
         if key not in sx:
             continue
-        ls = cli.get(key) or proto.get(key)
-        if not ls:
+        # Compare with LocalSend's faster sender (of those with 3+ runs), so the
+        # ratio is never flattered by the slower one.
+        options = [x for x in (cli.get(key), proto.get(key)) if x and x['runs'] >= 3]
+        if not options:
             continue
+        ls = min(options, key=lambda x: x['seconds'])
         s = sx[key]
         cases.append({
             'key': key, 'name': en, 'name_tr': tr, 'what': what, 'what_tr': what_tr,
             'sweaxdrop': s,
             'localsend': ls,
-            'localsend_sender': 'official CLI' if key in cli else 'LocalSend v2 protocol sender (2 at a time) to the official CLI receiver',
+            'localsend_cli': cli.get(key),
+            'localsend_proto': proto.get(key),
+            'localsend_sender': 'official CLI' if ls is cli.get(key) else 'LocalSend v2 protocol sender (2 at a time) to the official CLI receiver',
             'ratio': ls['seconds'] / s['seconds'],
         })
     out = {
@@ -81,15 +86,67 @@ def main():
         'cross_check': {k: v for k, v in proto.items()},
     }
     os.makedirs(os.path.join(ROOT, 'docs', 'data'), exist_ok=True)
-    json.dump(out, open(os.path.join(ROOT, 'docs', 'data', 'bench.json'), 'w', encoding='utf-8'), indent=1, ensure_ascii=False)
+    os.makedirs(os.path.join(ROOT, 'docs', 'art'), exist_ok=True)
 
-    print('| Case | SweaxDrop 1.0.0 | LocalSend 1.18.2 | Difference |')
-    print('|---|---|---|---|')
-    for c in cases:
-        print(f"| {c['name']} | **{c['sweaxdrop']['mb_s']:.0f} MB/s** · {c['sweaxdrop']['seconds']:.2f} s | {c['localsend']['mb_s']:.0f} MB/s · {c['localsend']['seconds']:.2f} s | {c['ratio']:.1f}× |")
+    def secs(x, lang='en'):
+        if not x:
+            return '—'
+        v = f"{x['seconds']:.2f} s" if lang == 'en' else f"{x['seconds']:.2f} sn".replace('.', ',')
+        if x.get('runs', 3) < 3:
+            v += ' (1 run)' if lang == 'en' else ' (1 ölçüm)'
+        return v
+
+    def verdict(r, lang):
+        if r >= 1.15:
+            return f'**{r:.1f}× faster**' if lang == 'en' else f'**{r:.1f} kat hızlı**'.replace('.', ',')
+        if r <= 0.87:
+            return f'{1 / r:.1f}× slower' if lang == 'en' else f'{1 / r:.1f} kat yavaş'.replace('.', ',')
+        return 'about the same' if lang == 'en' else 'yaklaşık aynı'
+
+    tables = {}
+    for lang in ('en', 'tr'):
+        if lang == 'en':
+            head = '| Files | SweaxDrop 1.0.0 | LocalSend 1.18.2 (CLI) | LocalSend 1.18.2 (protocol sender) | SweaxDrop is |'
+        else:
+            head = '| Dosyalar | SweaxDrop 1.0.0 | LocalSend 1.18.2 (CLI) | LocalSend 1.18.2 (protokol göndericisi) | SweaxDrop |'
+        rows = [head, '|---|---|---|---|---|']
+        for c in cases:
+            name = c['name'] if lang == 'en' else c['name_tr']
+            rows.append(f"| {name} | **{secs(c['sweaxdrop'], lang)}** | {secs(c['localsend_cli'], lang)} | {secs(c['localsend_proto'], lang)} | {verdict(c['ratio'], lang)} |")
+        tables[lang] = '\n'.join(rows)
+    out['tables'] = tables
+    json.dump(out, open(os.path.join(ROOT, 'docs', 'data', 'bench.json'), 'w', encoding='utf-8'), indent=1, ensure_ascii=False)
+    print(tables['en'])
     print()
-    for k, v in proto.items():
-        print(f'cross-check {k}: LocalSend protocol sender {v["mb_s"]:.0f} MB/s {v["seconds"]:.2f} s ({v["runs"]} runs)')
+    print(tables['tr'])
+
+    # Network path (no disk): lanes, TCP or QUIC, cipher.
+    net = os.path.join(RES, 'network.json')
+    if os.path.exists(net):
+        rows = ['| Transport | Cipher | Lanes | Throughput | CPU (both ends) |', '|---|---|---|---|---|']
+        for r in json.load(open(net, encoding='utf-8')):
+            st = r['settings']
+            rows.append(f"| {st['transport'].upper()} | {'AES-128-GCM' if st['cipher'] == 'aes' else 'ChaCha20-Poly1305'} | {st['streams']} | {r['mb_s']:,.0f} MB/s | {r['cpu_s_per_gb']:.1f} s per GB |")
+        out['network'] = '\n'.join(rows)
+        print()
+        print(out['network'])
+        json.dump(out, open(os.path.join(ROOT, 'docs', 'data', 'bench.json'), 'w', encoding='utf-8'), indent=1, ensure_ascii=False)
+
+    # Fill the markers in the READMEs and docs/benchmarks.md.
+    def fill(path, start, end, body):
+        f = os.path.join(ROOT, path)
+        t = open(f, encoding='utf-8').read()
+        if start in t and end in t:
+            i = t.index(start) + len(start)
+            j = t.index(end)
+            t = t[:i] + '\n' + body + '\n' + t[j:]
+            open(f, 'w', encoding='utf-8', newline='\n').write(t)
+
+    fill('README.md', '<!-- BENCH:START -->', '<!-- BENCH:END -->', tables['en'])
+    fill('README.tr.md', '<!-- BENCH:START -->', '<!-- BENCH:END -->', tables['tr'])
+    fill('docs/benchmarks.md', '<!-- RESULTS:START -->', '<!-- RESULTS:END -->', tables['en'] + '\n\nEvery run, in order, is in `bench/results/compare.json` (SweaxDrop) and `bench/results/localsend.jsonl` (LocalSend).')
+    if 'network' in out:
+        fill('docs/benchmarks.md', '<!-- TRANSPORT:START -->', '<!-- TRANSPORT:END -->', out['network'])
 
     import art
     for theme in art.T:
@@ -104,7 +161,7 @@ def chart(art, theme, lang, cases):
     row_h = 118
     H = 150 + row_h * len(cases) + 40
     title = 'SweaxDrop and LocalSend, same PC, same files' if lang == 'en' else 'SweaxDrop ve LocalSend; aynı PC, aynı dosyalar'
-    note = 'Time until every file is on disk. Median of 3 runs. Lower is better.' if lang == 'en' else 'Her dosya diske yazılana kadar geçen süre. 3 ölçümün ortancası. Düşük olan iyi.'
+    note = 'Time until every file is on disk. Median of 4 runs. Lower is better.' if lang == 'en' else 'Her dosya diske yazılana kadar geçen süre. 4 ölçümün ortancası. Düşük olan iyi.'
     names = ''.join(x['name' if lang == 'en' else 'name_tr'] for x in cases)
     text = title + note + names + 'SweaxDrop LocalSend 1.18.2 kat× faster hızlı'
     css = art.fonts_for({('Bric', art.bric_file(text), 700, None): text, ('Bric', art.bric_file(text), 450, None): text, ('Mono', art.MONO, 420, 87.5): '0123456789.,× smMBkatfsrelow '})
@@ -115,7 +172,7 @@ def chart(art, theme, lang, cases):
         mx = max(a, b)
         wa, wb = 760 * a / mx, 760 * b / mx
         nm = x['name' if lang == 'en' else 'name_tr']
-        ratio = f"{x['ratio']:.1f}× {'faster' if lang == 'en' else 'kat hızlı'}" if x['ratio'] >= 1.05 else ('about the same' if lang == 'en' else 'yaklaşık aynı')
+        ratio = f"{x['ratio']:.1f}× {'faster' if lang == 'en' else 'kat hızlı'}" if x['ratio'] >= 1.15 else ('about the same' if lang == 'en' else 'yaklaşık aynı')
         fmt = lambda s: f'{s:.2f} s' if s < 10 else f'{s:.1f} s'
         rows.append(f'''<g style="animation:rise .8s {0.1 + i*0.1:.2f}s cubic-bezier(.2,.8,.2,1) both">
 <text x="70" y="{y+18}" class="t" font-size="19" font-weight="700" fill="{c['ink']}">{art.esc(nm)}</text>

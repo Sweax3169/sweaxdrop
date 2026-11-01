@@ -1,0 +1,182 @@
+[
+  {
+    "bytes": 2147483648,
+    "case": "2 GiB in memory",
+    "cpu_s_per_gb": 1.884473022073507,
+    "files": 1,
+    "machine": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+    "mb_s": 1080.4233782558094,
+    "seconds": 1.9876316,
+    "settings": {
+      "chunk_mib": 4,
+      "cipher": "aes",
+      "disk": false,
+      "repeat": 3,
+      "streams": 1,
+      "transport": "tcp"
+    },
+    "tool": "sweaxdrop",
+    "ttfb_ms": 11.5315,
+    "when": 1793557842713
+  },
+  {
+    "bytes": 2147483648,
+    "case": "2 GiB in memory",
+    "cpu_s_per_gb": 1.7826096154749391,
+    "files": 1,
+    "machine": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+    "mb_s": 1374.422872721201,
+    "seconds": 1.5624621,
+    "settings": {
+      "chunk_mib": 4,
+      "cipher": "aes",
+      "disk": false,
+      "repeat": 3,
+      "streams": 2,
+      "transport": "tcp"
+    },
+    "tool": "sweaxdrop",
+    "ttfb_ms": 12.646,
+    "when": 1793557847541
+  },
+  {
+    "bytes": 2147483648,
+    "case": "2 GiB in memory",
+    "cpu_s_per_gb": 1.7826096154749391,
+    "files": 1,
+    "machine": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+    "mb_s": 3063.002552687967,
+    "seconds": 0.7011041,
+    "settings": {
+      "chunk_mib": 4,
+      "cipher": "aes",
+      "disk": false,
+      "repeat": 3,
+      "streams": 4,
+      "transport": "tcp"
+    },
+    "tool": "sweaxdrop",
+    "ttfb_ms": 14.9028,
+    "when": 1793557849739
+  },
+  {
+    "bytes": 2147483648,
+    "case": "2 GiB in memory",
+    "cpu_s_per_gb": 1.8553691916167736,
+    "files": 1,
+    "machine": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+    "mb_s": 3532.9066196727554,
+    "seconds": 0.6078518,
+    "settings": {
+      "chunk_mib": 4,
+      "cipher": "aes",
+      "disk": false,
+      "repeat": 3,
+      "streams": 8,
+      "transport": "tcp"
+    },
+    "tool": "sweaxdrop",
+    "ttfb_ms": 13.6115,
+    "when": 1793557851710
+  },
+  {
+    "bytes": 2147483648,
+    "case": "2 GiB in memory",
+    "cpu_s_per_gb": 9.837094694375992,
+    "files": 1,
+    "machine": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+    "mb_s": 225.05252283807948,
+    "seconds": 9.5421443,
+    "settings": {
+      "chunk_mib": 4,
+      "cipher": "aes",
+      "disk": false,
+      "repeat": 3,
+      "streams": 1,
+      "transport": "quic"
+    },
+    "tool": "sweaxdrop",
+    "ttfb_ms": 26.7742,
+    "when": 1793557880627
+  },
+  {
+    "bytes": 2147483648,
+    "case": "2 GiB in memory",
+    "cpu_s_per_gb": 10.652001947164536,
+    "files": 1,
+    "machine": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+    "mb_s": 187.59066369488175,
+    "seconds": 11.4477107,
+    "settings": {
+      "chunk_mib": 4,
+      "cipher": "aes",
+      "disk": false,
+      "repeat": 3,
+      "streams": 2,
+      "transport": "quic"
+    },
+    "tool": "sweaxdrop",
+    "ttfb_ms": 34.717400000000005,
+    "when": 1793557919920
+  },
+  {
+    "bytes": 2147483648,
+    "case": "2 GiB in memory",
+    "cpu_s_per_gb": 10.775693226605654,
+    "files": 1,
+    "machine": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+    "mb_s": 213.04430013913512,
+    "seconds": 10.0799864,
+    "settings": {
+      "chunk_mib": 4,
+      "cipher": "aes",
+      "disk": false,
+      "repeat": 3,
+      "streams": 4,
+      "transport": "quic"
+    },
+    "tool": "sweaxdrop",
+    "ttfb_ms": 73.9489,
+    "when": 1793557950451
+  },
+  {
+    "bytes": 2147483648,
+    "case": "2 GiB in memory",
+    "cpu_s_per_gb": 10.65927790477872,
+    "files": 1,
+    "machine": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+    "mb_s": 198.9820038378848,
+    "seconds": 10.7923511,
+    "settings": {
+      "chunk_mib": 4,
+      "cipher": "aes",
+      "disk": false,
+      "repeat": 3,
+      "streams": 8,
+      "transport": "quic"
+    },
+    "tool": "sweaxdrop",
+    "ttfb_ms": 181.7192,
+    "when": 1793557983431
+  },
+  {
+    "bytes": 2147483648,
+    "case": "2 GiB in memory",
+    "cpu_s_per_gb": 2.306478563696146,
+    "files": 1,
+    "machine": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+    "mb_s": 2299.878175676689,
+    "seconds": 0.933738,
+    "settings": {
+      "chunk_mib": 4,
+      "cipher": "chacha",
+      "disk": false,
+      "repeat": 3,
+      "streams": 4,
+      "transport": "tcp"
+    },
+    "tool": "sweaxdrop",
+    "ttfb_ms": 14.0231,
+    "when": 1793557986435
+  }
+]

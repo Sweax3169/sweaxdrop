@@ -49,12 +49,18 @@ LocalSend is the most popular open-source tool of this kind, so it is the one to
 beat. Both programs ran on the same PC, sent the same files to themselves over the
 same network path and wrote them to the same NVMe drive. LocalSend is the official
 1.18.2 command-line app, driven through a terminal so it accepts the request the
-moment it appears. Every number is the median of three runs, measured by
+moment it appears. Every number is the median of four runs, measured by
 [`sweaxdrop-bench`](crates/bench) and [`tools/localsend_bench.py`](tools/localsend_bench.py);
 the raw results are in [`bench/results`](bench/results) and the method in
 [docs/benchmarks.md](docs/benchmarks.md).
 
 <!-- BENCH:START -->
+| Files | SweaxDrop 1.0.0 | LocalSend 1.18.2 (CLI) | LocalSend 1.18.2 (protocol sender) | SweaxDrop is |
+|---|---|---|---|---|
+| One 4 GiB file | **13.57 s** | 13.56 s | 10.50 s (1 run) | about the same |
+| 200 photos, 723 MB | **0.64 s** | 3.08 s | — | **4.8× faster** |
+| 10 000 small files, 338 MB | **5.24 s** | — | 15.62 s | **3.0× faster** |
+| 300 small files | **0.13 s** | 1.67 s | 0.43 s | **3.4× faster** |
 <!-- BENCH:END -->
 
 <picture>
@@ -64,6 +70,18 @@ the raw results are in [`bench/results`](bench/results) and the method in
 
 What these numbers are, and are not:
 
+* **One 4 GiB file ties.** Both programs wrote it as fast as this SSD would take
+  it, and the SSD (95% full) is what varied: runs of both ranged from 6 to 27
+  seconds. With the disk out of the way SweaxDrop moves 3 GB/s on four lanes
+  ([network path](docs/benchmarks.md#tcp-or-quic)); LocalSend cannot be measured
+  without its disk.
+* **Many files is where the design shows.** One request per file, two files at a
+  time and a SHA-256 pass before sending cost LocalSend 3 to 5 times longer on
+  photos and small files.
+* LocalSend's own command-line sender cannot take 10 000 paths, so those runs use
+  a sender that speaks LocalSend's protocol the way LocalSend 1.18 does (two
+  uploads at a time, no hashing first). Where both senders could run, both are
+  shown, and the difference is computed against the faster one.
 * They show **how much each program can move** with the radio out of the way.
   Over Wi-Fi, one big file is limited by the air for both programs: a 2×2 Wi-Fi 6
   phone reaches roughly 100 MB/s on an 80 MHz channel, and about half of that when
@@ -156,6 +174,12 @@ QUIC, AES or ChaCha20. Light, dark, five palettes, English and Turkish.
 <img src="docs/media/incoming-dark-en.png" alt="An incoming offer: the files, a safety code, where they will be saved." width="49%">
 <img src="docs/media/history-dark-en.png" alt="History with the speed over time of a transfer." width="49%">
 <img src="docs/media/pair-dark-en.png" alt="Pairing: a QR code and a six-digit code." width="49%">
+</div>
+
+<div align="center">
+<img src="docs/media/windows-app-en.png" alt="The Windows app (release build) after sending a folder of 40 photos and a message to another device." width="63%">
+<img src="docs/media/android-app.png" alt="The Android app on the emulator: Nearby while it looks for devices, and an incoming offer with its safety code." width="35%">
+<br><sub>The real apps: the Windows release build, driven by <code>tools/smoke-desktop.mjs</code>, and the Android build on the emulator. The speed on that card is a cold first run of 40 small photos into a fresh folder, not a benchmark; the measured numbers are <a href="#measured-against-localsend">above</a>.</sub>
 </div>
 
 ## How it is fast

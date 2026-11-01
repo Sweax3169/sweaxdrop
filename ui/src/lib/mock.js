@@ -199,7 +199,7 @@ export function createMockBridge(q = new URLSearchParams()) {
 
   return {
     kind: 'mock',
-    caps: { folders: true, photos: q.get('mobile') === '1', drop: false, scan: q.get('mobile') === '1', reveal: true, saveDir: true, share: false, tray: false },
+    caps: { folders: true, photos: q.get('mobile') === '1', drop: false, scan: q.get('mobile') === '1', reveal: q.get('mobile') !== '1', saveDir: true, share: false, tray: false },
     async call(cmd, args = {}) {
       await new Promise((r) => setTimeout(r, 20));
       switch (cmd) {

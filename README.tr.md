@@ -48,12 +48,18 @@ uygulamanın kendisi olur.
 LocalSend bu türün en yaygın açık kaynak aracı; geçilmesi gereken o. İki program da
 aynı PC'de çalıştı, aynı dosyaları aynı ağ yolundan kendine gönderdi ve aynı NVMe
 sürücüye yazdı. LocalSend, resmî 1.18.2 komut satırı uygulaması; istek ekrana
-düştüğü an kabul etmesi için bir terminal üzerinden sürüldü. Her sayı üç ölçümün
+düştüğü an kabul etmesi için bir terminal üzerinden sürüldü. Her sayı dört ölçümün
 ortancası; ölçenler [`sweaxdrop-bench`](crates/bench) ve
 [`tools/localsend_bench.py`](tools/localsend_bench.py). Ham sonuçlar
 [`bench/results`](bench/results) içinde, yöntem [docs/benchmarks.md](docs/benchmarks.md)'de.
 
 <!-- BENCH:START -->
+| Dosyalar | SweaxDrop 1.0.0 | LocalSend 1.18.2 (CLI) | LocalSend 1.18.2 (protokol göndericisi) | SweaxDrop |
+|---|---|---|---|---|
+| Tek 4 GiB dosya | **13,57 sn** | 13,56 sn | 10,50 sn (1 ölçüm) | yaklaşık aynı |
+| 200 fotoğraf, 723 MB | **0,64 sn** | 3,08 sn | — | **4,8 kat hızlı** |
+| 10 000 küçük dosya, 338 MB | **5,24 sn** | — | 15,62 sn | **3,0 kat hızlı** |
+| 300 küçük dosya | **0,13 sn** | 1,67 sn | 0,43 sn | **3,4 kat hızlı** |
 <!-- BENCH:END -->
 
 <picture>
@@ -63,6 +69,17 @@ ortancası; ölçenler [`sweaxdrop-bench`](crates/bench) ve
 
 Bu sayılar neyi gösterir, neyi göstermez:
 
+* **Tek 4 GiB dosyada berabere.** İki program da dosyayı bu SSD'nin kabul ettiği
+  hızda yazdı; değişen SSD'ydi (%95 dolu): ikisinin ölçümleri de 6 ile 27 saniye
+  arasında oynadı. Disk aradan çıkınca SweaxDrop dört şeritte 3 GB/s taşıyor
+  ([ağ yolu](docs/benchmarks.md#tcp-or-quic)); LocalSend diski olmadan ölçülemiyor.
+* **Fark çok dosyada ortaya çıkıyor.** Dosya başına bir istek, aynı anda iki dosya
+  ve göndermeden önce SHA-256 turu, fotoğraflarda ve küçük dosyalarda LocalSend'e
+  3 ila 5 kat daha uzun sürdürüyor.
+* LocalSend'in kendi komut satırı göndericisi 10.000 yol alamıyor; bu ölçümlerde
+  LocalSend'in protokolünü LocalSend 1.18 gibi konuşan bir gönderici kullanıldı
+  (aynı anda iki yükleme, önceden hash yok). İki gönderici de çalışabildiğinde ikisi
+  de gösterildi ve fark hızlı olana göre hesaplandı.
 * **Her programın ne kadar taşıyabildiğini** gösterir; radyo devre dışıyken.
   Wi-Fi'da tek büyük dosyada iki programın da sınırı havadır: 2×2 Wi-Fi 6 bir
   telefon 80 MHz kanalda yaklaşık 100 MB/s'ye çıkar; iki cihaz da aynı modemin
@@ -158,6 +175,12 @@ TCP ya da QUIC, AES ya da ChaCha20. Açık, koyu, beş renk paleti, Türkçe ve
 <img src="docs/media/incoming-dark-tr.png" alt="Gelen bir teklif: dosyalar, güvenlik kodu, kaydedileceği yer." width="49%">
 <img src="docs/media/history-dark-tr.png" alt="Bir aktarımın zamana göre hızıyla geçmiş." width="49%">
 <img src="docs/media/pair-dark-tr.png" alt="Eşleştirme: QR kod ve altı haneli kod." width="49%">
+</div>
+
+<div align="center">
+<img src="docs/media/windows-app-tr.png" alt="Windows uygulaması (sürüm derlemesi): 40 fotoğraflık bir klasör ve bir mesaj başka bir cihaza gönderilmiş." width="63%">
+<img src="docs/media/android-app.png" alt="Emülatörde Android uygulaması: cihaz ararken Yakındakiler ekranı ve güvenlik koduyla gelen bir teklif." width="35%">
+<br><sub>Gerçek uygulamalar: <code>tools/smoke-desktop.mjs</code> ile sürülen Windows sürüm derlemesi ve emülatördeki Android derlemesi. Karttaki hız, 40 küçük fotoğrafın yeni bir klasöre soğuk ilk aktarımıdır, ölçüm değildir; ölçülen sayılar <a href="#localsende-karşı-ölçüm">yukarıda</a>.</sub>
 </div>
 
 ## Neden hızlı

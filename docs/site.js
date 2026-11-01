@@ -7,7 +7,7 @@ const TR = {
   h1a: 'Dosyaların,', h1b: 'paralel şeritlerde.',
   lead: 'Fotoğraf, video, klasör ve metin; bilgisayarınla telefonların arasında, kendi Wi-Fi’ın üzerinden. Uçtan uca şifreli, parça parça doğrulanır, bağlantı koparsa kaldığı yerden sürer.',
   cta_get: 'İndir', cta_try: 'Burada dene',
-  f1: '8 şerit, şifreli, bu PC’nin loopback’inde', f2: 'iki taraf da anahtarıyla kanıtlanır', f3: 'hesap, sunucu, bulut',
+  f1: '4 şifreli şerit, tek PC’de bellekte', f2: '200 fotoğrafta LocalSend 1.18’den hızlı', f3: 'iki taraf da anahtarıyla kanıtlanır',
   live: 'Canlı demo · gerçek arayüz, sahte bir ağla',
   b1t: 'Dosya, klasör, fotoğraf', b1: 'klasör yapısı korunur, telefonda fotoğraflar galeriye gider',
   b2t: 'Metin ve pano', b2: 'telefondaki bir bağlantı doğrudan PC panosuna',
