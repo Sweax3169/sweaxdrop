@@ -58,7 +58,7 @@ kotlin {
 }
 
 // The shared web UI (ui/dist) ships inside the APK as assets/ui.
-val copyUi by tasks.registering(Copy::class) {
+val copyUi by tasks.registering(Sync::class) {
     from(rootProject.file("../../ui/dist"))
     into(layout.projectDirectory.dir("src/main/assets/ui"))
 }
