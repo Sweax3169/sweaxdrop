@@ -78,7 +78,10 @@ class MainActivity : Activity() {
         setContentView(web)
         app.ui = { json -> js("window.__swx&&window.__swx.event(${JSONObject.quote(json)})") }
         app.replies = { id, json -> js("window.__swx&&window.__swx.resolve($id,${JSONObject.quote(json)})") }
-        web.loadUrl("$ORIGIN/index.html")
+        // `adb shell am start ... --es demo live` opens the built-in demo
+        // (pretend devices), used to record the README videos.
+        val demo = intent.getStringExtra("demo")
+        web.loadUrl(if (demo != null) "$ORIGIN/index.html?mock=1&mobile=1&demo=$demo&theme=${intent.getStringExtra("theme") ?: "dark"}&lang=${intent.getStringExtra("lang") ?: "en"}" else "$ORIGIN/index.html")
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQ_NOTIFY)
         }

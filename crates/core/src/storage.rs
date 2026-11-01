@@ -320,15 +320,36 @@ pub trait Sink: Send + Sync {
 
 pub struct FsSink {
     pub root: PathBuf,
+    /// Folders already created in this transfer (saves a stat per file).
+    dirs: parking_lot::Mutex<std::collections::HashSet<PathBuf>>,
 }
+
+/// Files up to this size are written straight under their final name: one
+/// chunk, so they are never half-written for long, and Windows does not
+/// have to scan them twice (once on close, once on rename).
+pub const DIRECT_MAX: u64 = 4 << 20;
 
 struct FsOut {
     file: parking_lot::RwLock<Option<File>>,
     temp: PathBuf,
     target: PathBuf,
+    direct: bool,
 }
 
 impl FsSink {
+    pub fn new(root: PathBuf) -> Self {
+        Self { root, dirs: Default::default() }
+    }
+
+    fn ensure_dir(&self, dir: &Path) -> io::Result<()> {
+        if self.dirs.lock().contains(dir) {
+            return Ok(());
+        }
+        fs::create_dir_all(dir)?;
+        self.dirs.lock().insert(dir.to_path_buf());
+        Ok(())
+    }
+
     fn target(&self, item: &Item) -> PathBuf {
         self.root.join(safe_relative(&item.path))
     }
@@ -338,16 +359,26 @@ impl Sink for FsSink {
     fn create(&self, item: &Item, _transfer: &str, _sender: &str) -> Result<Arc<dyn OutFile>> {
         let target = self.target(item);
         if let Some(dir) = target.parent() {
-            fs::create_dir_all(dir)?;
+            self.ensure_dir(dir)?;
+        }
+        if item.size <= DIRECT_MAX {
+            // Small file: final name right away (a clash picks "name (2)").
+            for _ in 0..50 {
+                let path = unique_path(&target);
+                match OpenOptions::new().write(true).create_new(true).open(&path) {
+                    Ok(f) => return Ok(Arc::new(FsOut { file: parking_lot::RwLock::new(Some(f)), temp: path.clone(), target: path, direct: true })),
+                    Err(e) if e.kind() == io::ErrorKind::AlreadyExists => continue,
+                    Err(e) => return Err(e.into()),
+                }
+            }
+            return Err(anyhow!("no free name for {}", target.display()));
         }
         let mut temp = target.clone().into_os_string();
         temp.push(".sdpart");
         let temp = unique_path(Path::new(&temp));
         let f = OpenOptions::new().read(true).write(true).create_new(true).open(&temp)?;
-        if item.size > 0 {
-            f.set_len(item.size)?;
-        }
-        Ok(Arc::new(FsOut { file: parking_lot::RwLock::new(Some(f)), temp, target }))
+        f.set_len(item.size)?;
+        Ok(Arc::new(FsOut { file: parking_lot::RwLock::new(Some(f)), temp, target, direct: false }))
     }
 
     fn reopen(&self, item: &Item, partial: &Path) -> Result<Arc<dyn OutFile>> {
@@ -359,6 +390,7 @@ impl Sink for FsSink {
             file: parking_lot::RwLock::new(Some(f)),
             temp: partial.to_path_buf(),
             target: self.target(item),
+            direct: false,
         }))
     }
 
@@ -390,6 +422,9 @@ impl OutFile for FsOut {
             }
             drop(f);
         }
+        if self.direct {
+            return Ok(self.target.display().to_string());
+        }
         let dest = unique_path(&self.target);
         fs::rename(&self.temp, &dest)?;
         Ok(dest.display().to_string())
@@ -397,13 +432,13 @@ impl OutFile for FsOut {
 
     fn abort(&self, keep: bool) {
         self.file.write().take();
-        if !keep {
+        if !keep || self.direct {
             let _ = fs::remove_file(&self.temp);
         }
     }
 
     fn partial_path(&self) -> Option<PathBuf> {
-        Some(self.temp.clone())
+        (!self.direct).then(|| self.temp.clone())
     }
 }
 

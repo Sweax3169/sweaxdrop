@@ -4327,6 +4327,7 @@ dependencies = [
  "clap",
  "futures-util",
  "parking_lot 0.13.0",
+ "rcgen",
  "reqwest",
  "rustls",
  "serde",

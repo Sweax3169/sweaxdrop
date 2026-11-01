@@ -40,20 +40,28 @@ impl ServerCertVerifier for AcceptAll {
     }
 }
 
-fn client() -> Result<reqwest::Client> {
+/// LocalSend 1.18 servers require a client certificate (any valid one) and
+/// use its SHA-256 as the sender's fingerprint.
+fn client() -> Result<(reqwest::Client, String)> {
     let provider = Arc::new(rustls::crypto::ring::default_provider());
+    let key = rcgen::KeyPair::generate_for(&rcgen::PKCS_ECDSA_P256_SHA256)?;
+    let cert = rcgen::CertificateParams::new(vec!["localsend-bench".to_string()])?.self_signed(&key)?;
+    let der = cert.der().clone();
+    let fp = sha2::Digest::finalize(<sha2::Sha256 as sha2::Digest>::new_with_prefix(&der[..]));
+    let fingerprint: String = fp.iter().map(|b| format!("{b:02x}")).collect();
+    let key_der = rustls::pki_types::PrivateKeyDer::Pkcs8(rustls::pki_types::PrivatePkcs8KeyDer::from(key.serialize_der()));
     let cfg = rustls::ClientConfig::builder_with_provider(provider.clone())
         .with_safe_default_protocol_versions()?
         .dangerous()
         .with_custom_certificate_verifier(Arc::new(AcceptAll(provider)))
-        .with_no_client_auth();
-    Ok(reqwest::Client::builder().tls_backend_preconfigured(cfg).pool_max_idle_per_host(32).build()?)
+        .with_client_auth_cert(vec![der], key_der)?;
+    Ok((reqwest::Client::builder().tls_backend_preconfigured(cfg).pool_max_idle_per_host(32).build()?, fingerprint))
 }
 
 pub async fn bench(to: &str, paths: &[PathBuf], concurrency: usize, https: bool, repeat: u32, label: Option<String>) -> Result<Run> {
     let scheme = if https { "https" } else { "http" };
     let base = format!("{scheme}://{to}/api/localsend/v2");
-    let http = client()?;
+    let (http, fingerprint) = client()?;
     let (mut secs, mut ttfbs, mut cpus) = (vec![], vec![], vec![]);
     let mut total = 0u64;
     let mut count = 0u64;
@@ -80,7 +88,7 @@ pub async fn bench(to: &str, paths: &[PathBuf], concurrency: usize, https: bool,
                 "version": "2.1",
                 "deviceModel": "bench",
                 "deviceType": "desktop",
-                "fingerprint": format!("bench{}", std::process::id()),
+                "fingerprint": if https { fingerprint.clone() } else { format!("bench{}", std::process::id()) },
                 "port": 53317,
                 "protocol": scheme,
                 "download": false

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>SweaxDrop — files between your PC and your phones, on parallel lanes</title>
+  <meta name="description" content="SweaxDrop sends photos, videos, folders and text between Windows, Android and iPhone over your own Wi-Fi. Encrypted end to end, resumes where it stopped, measured against LocalSend." />
+  <meta name="color-scheme" content="dark light" />
+  <meta property="og:title" content="SweaxDrop" />
+  <meta property="og:description" content="Files between your PC and your phones, on parallel lanes. Windows, Android, iPhone." />
+  <meta property="og:image" content="art/banner-en-dark.svg" />
+  <link rel="icon" href="app/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="site.css" />
+</head>
+<body>
+  <canvas id="lanes" aria-hidden="true"></canvas>
+
+  <header class="nav">
+    <a class="brand" href="#top" aria-label="SweaxDrop">
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="currentColor"/><rect x="6" y="9.2" width="12" height="3" rx="1.5" fill="var(--bg)" opacity=".55"/><rect x="6" y="14.5" width="14.5" height="3" rx="1.5" fill="var(--bg)"/><rect x="6" y="19.8" width="9" height="3" rx="1.5" fill="var(--bg)" opacity=".55"/><circle cx="24.2" cy="16" r="2.9" fill="var(--send)"/></svg>
+      <span>SweaxDrop</span>
+    </a>
+    <nav>
+      <a href="#how" data-i="nav_how">How it works</a>
+      <a href="#speed" data-i="nav_speed">Speed</a>
+      <a href="#security" data-i="nav_sec">Security</a>
+      <a href="#get" data-i="nav_get">Download</a>
+    </nav>
+    <div class="nav-tools">
+      <button class="lang" id="lang" aria-label="Language">TR</button>
+      <a class="gh" href="https://github.com/Sweax3169/sweaxdrop" aria-label="GitHub"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.29-1.69-1.29-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg></a>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="kicker" data-i="kicker">Windows · Android · iPhone · any browser</p>
+        <h1><span data-i="h1a">Your files,</span><br /><span class="send" data-i="h1b">on parallel lanes.</span></h1>
+        <p class="lead" data-i="lead">Photos, videos, folders and text between your PC and your phones, over your own Wi-Fi. Encrypted end to end, checked chunk by chunk, and it picks up where it stopped when the connection drops.</p>
+        <div class="cta">
+          <a class="btn primary" href="#get" data-i="cta_get">Download</a>
+          <a class="btn" href="#demo" data-i="cta_try">Try it here</a>
+        </div>
+        <ul class="facts">
+          <li><b data-count="2.4" data-unit="GB/s">2.4 GB/s</b><span data-i="f1">8 lanes, encrypted, on this PC's loopback</span></li>
+          <li><b>TLS 1.3</b><span data-i="f2">both sides proven by their key</span></li>
+          <li><b>0</b><span data-i="f3">accounts, servers, cloud</span></li>
+        </ul>
+      </div>
+      <div class="hero-stage" id="demo">
+        <div class="window">
+          <div class="window-bar"><span></span><span></span><span></span><em data-i="live">Live demo · the real interface with a pretend network</em></div>
+          <iframe src="app/index.html?mock=1&demo=live&theme=dark" title="SweaxDrop demo" loading="eager"></iframe>
+        </div>
+        <div class="phone">
+          <div class="notch"></div>
+          <iframe src="app/index.html?mock=1&mobile=1&theme=dark" title="SweaxDrop on a phone" loading="lazy"></iframe>
+        </div>
+      </div>
+    </section>
+
+    <section class="band reveal">
+      <div class="band-item"><b data-i="b1t">Files, folders, photos</b><span data-i="b1">keep their folder structure, land in the gallery on phones</span></div>
+      <div class="band-item"><b data-i="b2t">Text and clipboard</b><span data-i="b2">a link from the phone, straight onto the PC clipboard</span></div>
+      <div class="band-item"><b data-i="b3t">Queue, pause, resume</b><span data-i="b3">lose Wi-Fi mid-way: only the missing chunks travel again</span></div>
+      <div class="band-item"><b data-i="b4t">No app on the phone?</b><span data-i="b4">scan the QR code, the browser becomes the app</span></div>
+    </section>
+
+    <section class="split reveal" id="how">
+      <div>
+        <h2 data-i="how_h">Why it is fast</h2>
+        <p data-i="how_p1">Most tools send one file per request and wait for an answer before the next one. With two thousand holiday photos, that waiting is most of the time.</p>
+        <p data-i="how_p2">SweaxDrop opens several encrypted lanes at once. Every lane takes the next 4 MiB chunk from one shared queue: a huge video is split across all of them, small files follow each other with no round trip, and a lane that stalls holds nobody up. Reading, hashing, encrypting and writing overlap on separate threads.</p>
+        <p data-i="how_p3">The lanes you see in the app are the real ones: each track moves as fast as its own connection moves bytes.</p>
+      </div>
+      <picture class="diagram">
+        <source media="(prefers-color-scheme: light)" srcset="art/lanes-en-light.svg" data-src-tr="art/lanes-tr-light.svg" />
+        <img src="art/lanes-en-dark.svg" data-src-tr="art/lanes-tr-dark.svg" alt="Sender threads read and hash chunks, four TLS lanes carry them, receiver threads verify and write them at their offsets." loading="lazy" />
+      </picture>
+    </section>
+
+    <section class="videos reveal">
+      <figure>
+        <video src="media/desktop-dark-en.mp4" data-src-tr="media/desktop-dark-tr.mp4" autoplay muted loop playsinline preload="metadata" poster="media/home-dark-en.png"></video>
+        <figcaption data-i="v1">Windows: drop files on a device, accept a phone's photos, look back at the speed.</figcaption>
+      </figure>
+      <figure class="tall">
+        <video src="media/phone-dark-en.mp4" data-src-tr="media/phone-dark-tr.mp4" autoplay muted loop playsinline preload="metadata"></video>
+        <figcaption data-i="v2">Android and iPhone: the same app, the same lanes.</figcaption>
+      </figure>
+    </section>
+
+    <section class="speed reveal" id="speed">
+      <h2 data-i="speed_h">Measured, not promised</h2>
+      <p class="sub" data-i="speed_p">Every number on this page comes from <code>sweaxdrop-bench</code> in the repository, run on one PC (AMD Ryzen 5 7600, NVMe SSD, Windows 11) against the official LocalSend 1.18.2 command-line app, with the same files on the same drive. Wi-Fi results with real phones are added as they are measured.</p>
+      <div id="bench" class="bench"></div>
+      <p class="note" data-i="speed_note">Over Wi-Fi the radio is the limit for one big file. The differences that stay are in many small files, in the time to start, and in what happens when the connection drops.</p>
+    </section>
+
+    <section class="split reveal" id="security">
+      <div>
+        <h2 data-i="sec_h">Private by construction</h2>
+        <ul class="list">
+          <li data-i="sec1">Each device has its own Ed25519 key. Its id is derived from that key, so it cannot be borrowed.</li>
+          <li data-i="sec2">Every transfer runs inside TLS 1.3 with both sides proving their key. Paired devices are pinned: a different key is refused.</li>
+          <li data-i="sec3">Pairing by PIN uses SPAKE2 and checks both TLS keys, so someone relaying the connection cannot pair in your place.</li>
+          <li data-i="sec4">Every 4 MiB chunk carries a BLAKE3 hash and is verified before it is written.</li>
+          <li data-i="sec5">Nothing leaves your network: no account, no server, no telemetry.</li>
+        </ul>
+      </div>
+      <picture class="diagram">
+        <source media="(prefers-color-scheme: light)" srcset="art/architecture-en-light.svg" data-src-tr="art/architecture-tr-light.svg" />
+        <img src="art/architecture-en-dark.svg" data-src-tr="art/architecture-tr-dark.svg" alt="One Rust core shared by the Windows, Android and iPhone apps and the browser client." loading="lazy" />
+      </picture>
+    </section>
+
+    <section class="get reveal" id="get">
+      <h2 data-i="get_h">Get SweaxDrop</h2>
+      <div class="cards">
+        <a class="card" href="https://github.com/Sweax3169/sweaxdrop/releases/latest">
+          <b>Windows 10 / 11</b><span data-i="get_win">Installer, about 5 MB. Asks once (UAC) to add its firewall rule.</span>
+        </a>
+        <a class="card" href="https://github.com/Sweax3169/sweaxdrop/releases/latest">
+          <b>Android 10+</b><span data-i="get_and">APK from the release page. Allow installing from your browser when asked.</span>
+        </a>
+        <a class="card" href="https://github.com/Sweax3169/sweaxdrop#iphone">
+          <b>iPhone</b><span data-i="get_ios">Right away: scan the QR code on your PC. Native app: sideload the .ipa (steps in the README).</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="faq reveal">
+      <h2 data-i="faq_h">Questions</h2>
+      <details><summary data-i="q1">Does it need internet?</summary><p data-i="a1">No. Devices find each other on the local network and talk directly. A phone hotspot or USB tethering works too, and is often faster than going through a router.</p></details>
+      <details><summary data-i="q2">Is it faster than LocalSend everywhere?</summary><p data-i="a2">Not for one huge file over Wi-Fi: there both are limited by the radio. It is faster with many files, starts sooner, and resumes instead of starting over. The numbers above show exactly where.</p></details>
+      <details><summary data-i="q3">What about the browser client?</summary><p data-i="a3">It is plain HTTP on your network, protected by the one-time secret in the QR code, because browsers cannot accept the PC's self-signed certificate without a warning. The apps use the encrypted protocol.</p></details>
+      <details><summary data-i="q4">Where do received files go?</summary><p data-i="a4">Windows: Downloads\SweaxDrop or a folder you choose. Android: photos and videos to the gallery, the rest to Download/SweaxDrop. iPhone: Photos, and the Files app under SweaxDrop.</p></details>
+    </section>
+  </main>
+
+  <footer>
+    <span>SweaxDrop · Sweax Studios · MIT</span>
+    <a href="https://github.com/Sweax3169/sweaxdrop">github.com/Sweax3169/sweaxdrop</a>
+  </footer>
+  <script src="site.js"></script>
+</body>
+</html>

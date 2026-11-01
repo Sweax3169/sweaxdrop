@@ -48,6 +48,21 @@ pub struct RecvState {
     ctrl: Mutex<Option<mpsc::UnboundedSender<Ctrl>>>,
     ended: AtomicU32,
     progress: Notify,
+    /// Closing and renaming a file is where antivirus scanners wait; it runs
+    /// on the blocking pool so the lane keeps writing the next file.
+    rt: tokio::runtime::Handle,
+    /// Whole small files (one chunk, up to SMALL_MAX) are created, written and
+    /// closed here, 16 at a time: creating a file is the slow part on Windows
+    /// (about 0.6 ms each, much of it antivirus), and it overlaps well.
+    small: parking_lot::Mutex<Option<std::sync::mpsc::SyncSender<SmallJob>>>,
+}
+
+pub(crate) const SMALL_MAX: u64 = 1 << 20;
+const SMALL_WORKERS: usize = 16;
+
+struct SmallJob {
+    slot: usize,
+    data: Vec<u8>,
 }
 
 impl RecvState {
@@ -80,6 +95,8 @@ impl RecvState {
             ctrl: Mutex::new(None),
             ended: AtomicU32::new(0),
             progress: Notify::new(),
+            rt: tokio::runtime::Handle::current(),
+            small: parking_lot::Mutex::new(None),
         }))
     }
 
@@ -146,7 +163,7 @@ impl RecvState {
         Ok(s.out.clone())
     }
 
-    pub(crate) fn chunk_ok(&self, item: u32, index: u32) {
+    pub(crate) fn chunk_ok(self: &Arc<Self>, item: u32, index: u32) {
         let Some((i, it)) = self.item(item) else { return };
         let finish = {
             let mut s = self.slots[i].lock();
@@ -163,21 +180,98 @@ impl RecvState {
             }
         };
         if let Some(out) = finish {
-            match out.finish(it.mtime) {
-                Ok(path) => {
-                    if !path.is_empty() {
-                        self.t.saved.lock().push(path);
+            let me = self.clone();
+            let mtime = it.mtime;
+            self.rt.spawn_blocking(move || {
+                match out.finish(mtime) {
+                    Ok(path) => {
+                        if !path.is_empty() {
+                            me.t.saved.lock().push(path);
+                        }
+                        me.t.files_done.fetch_add(1, Ordering::Relaxed);
                     }
-                    self.t.files_done.fetch_add(1, Ordering::Relaxed);
+                    Err(e) => {
+                        tracing::warn!("could not save {}: {e:#}", me.t.items[i].path);
+                        me.slots[i].lock().failed = true;
+                    }
                 }
+                me.done.fetch_add(1, Ordering::Relaxed);
+                me.progress.notify_one();
+            });
+        }
+    }
+
+    /// True when this chunk is a whole file small enough for the pool.
+    fn is_small(&self, h: &ChunkHeader) -> bool {
+        h.index == 0 && self.item(h.item).is_some_and(|(_, it)| it.size <= SMALL_MAX && it.size <= self.chunk as u64)
+    }
+
+    /// Hands a verified small file to the pool (started on first use).
+    fn write_small(self: &Arc<Self>, item: u32, data: Vec<u8>) -> Result<()> {
+        let Some((i, _)) = self.item(item) else { return Ok(()) };
+        {
+            let mut s = self.slots[i].lock();
+            if s.finished || s.failed || s.bits[0] {
+                return Ok(());
+            }
+            s.bits[0] = true; // claimed; a retry of this chunk is ignored
+            s.have = 1;
+        }
+        let tx = {
+            let mut g = self.small.lock();
+            if g.is_none() {
+                let (tx, rx) = std::sync::mpsc::sync_channel::<SmallJob>(32);
+                let rx = Arc::new(parking_lot::Mutex::new(rx));
+                for n in 0..SMALL_WORKERS {
+                    let rx = rx.clone();
+                    let me = self.clone();
+                    std::thread::Builder::new().name(format!("swx-small-{n}")).spawn(move || loop {
+                        let job = match rx.lock().recv() {
+                            Ok(j) => j,
+                            Err(_) => return,
+                        };
+                        me.finish_small(job);
+                    })?;
+                }
+                *g = Some(tx);
+            }
+            g.as_ref().unwrap().clone()
+        };
+        tx.send(SmallJob { slot: i, data }).map_err(|_| anyhow!("small file pool stopped"))
+    }
+
+    fn finish_small(&self, job: SmallJob) {
+        let it = &self.t.items[job.slot];
+        let res = (|| -> Result<String> {
+            let out = self.sink.create(it, &self.t.id, &self.sender.name)?;
+            if !job.data.is_empty() {
+                out.write_at(&job.data, 0)?;
+            }
+            out.finish(it.mtime)
+        })();
+        {
+            let mut s = self.slots[job.slot].lock();
+            match &res {
+                Ok(_) => s.finished = true,
                 Err(e) => {
                     tracing::warn!("could not save {}: {e:#}", it.path);
-                    self.slots[i].lock().failed = true;
+                    s.failed = true;
                 }
             }
-            self.done.fetch_add(1, Ordering::Relaxed);
-            self.progress.notify_one();
         }
+        if let Ok(path) = res {
+            if !path.is_empty() {
+                self.t.saved.lock().push(path);
+            }
+            self.t.files_done.fetch_add(1, Ordering::Relaxed);
+        }
+        self.done.fetch_add(1, Ordering::Relaxed);
+        self.progress.notify_one();
+    }
+
+    /// Stops the small-file workers once nothing more will come.
+    pub(crate) fn close_small(&self) {
+        self.small.lock().take();
     }
 
     fn chunk_bad(&self, item: u32, index: u32) {
@@ -213,6 +307,7 @@ impl RecvState {
 
     /// Closes every open file. `keep` leaves partial data for a later resume.
     pub fn abort(&self, keep: bool) {
+        self.close_small();
         for s in &self.slots {
             if let Some(o) = s.lock().out.take() {
                 o.abort(keep);
@@ -444,6 +539,9 @@ async fn receive(shared: Arc<Shared>, ctrl: &mut Stream, sender: DeviceInfo, fp:
     shared.remove_route(&token);
     lanes.abort_all();
     *st.ctrl.lock() = None;
+    if !matches!(outcome, Err(_)) {
+        st.close_small();
+    }
 
     match outcome {
         Ok(true) => {
@@ -514,16 +612,25 @@ async fn recv_lane(st: Arc<RecvState>, lane: usize, mut r: BoxRead) -> Result<()
 
 fn write_pieces(st: Arc<RecvState>, lane: usize, mut rx: mpsc::Receiver<WPiece>, pool: Arc<Mutex<Vec<Vec<u8>>>>) -> Result<()> {
     let mut cur: Option<(ChunkHeader, Option<Arc<dyn OutFile>>, blake3::Hasher, u64)> = None;
+    let mut small: Option<Vec<u8>> = None;
     while let Some(p) = rx.blocking_recv() {
         match p {
             WPiece::Begin(h) => {
-                let f = st.file(h.item)?;
-                cur = Some((h, f, blake3::Hasher::new(), 0));
+                if st.is_small(&h) {
+                    small = Some(Vec::with_capacity(h.raw_len as usize));
+                    cur = Some((h, None, blake3::Hasher::new(), 0));
+                } else {
+                    small = None;
+                    let f = st.file(h.item)?;
+                    cur = Some((h, f, blake3::Hasher::new(), 0));
+                }
             }
             WPiece::Data(buf, n) => {
                 let (h, f, hasher, pos) = cur.as_mut().ok_or_else(|| anyhow!("data before header"))?;
                 hasher.update(&buf[..n]);
-                if let Some(f) = f {
+                if let Some(b) = small.as_mut() {
+                    b.extend_from_slice(&buf[..n]);
+                } else if let Some(f) = f {
                     let off = h.index as u64 * st.chunk as u64 + *pos;
                     f.write_at(&buf[..n], off).map_err(|e| anyhow!("write failed: {e}"))?;
                 }
@@ -536,6 +643,15 @@ fn write_pieces(st: Arc<RecvState>, lane: usize, mut rx: mpsc::Receiver<WPiece>,
             }
             WPiece::End(hash) => {
                 let (h, f, hasher, _) = cur.take().ok_or_else(|| anyhow!("trailer before header"))?;
+                if let Some(data) = small.take() {
+                    if hasher.finalize().as_bytes() == &hash {
+                        st.write_small(h.item, data)?;
+                    } else {
+                        st.t.sub_bytes(h.raw_len as u64);
+                        st.chunk_bad(h.item, h.index);
+                    }
+                    continue;
+                }
                 if f.is_none() {
                     continue;
                 }

@@ -287,9 +287,9 @@ impl Shared {
             if let Some(p) = &self.platform {
                 return Arc::new(PlatformSink { platform: p.clone(), dest: s.save_uri.clone(), gallery: s.media_to_gallery });
             }
-            return Arc::new(FsSink { root: default_save_dir() });
+            return Arc::new(FsSink::new(default_save_dir()));
         }
-        Arc::new(FsSink { root: PathBuf::from(dir) })
+        Arc::new(FsSink::new(PathBuf::from(dir)))
     }
 
     pub async fn decide(&self, t: &Arc<Transfer>, sender: &DeviceInfo, fp: [u8; 32]) -> Decision {

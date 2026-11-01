@@ -94,10 +94,16 @@ jobs:
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
           mkdir -p ../../out
           V=$(grep versionName app/build.gradle.kts | sed 's/.*"\(.*\)".*/\1/')
-          cp app/build/outputs/apk/release/app-release.apk ../../out/SweaxDrop-$V-Android.apk
+          if [ -f "$SWEAXDROP_KEYSTORE" ]; then
+            ./gradlew assembleRelease --no-daemon
+            cp app/build/outputs/apk/release/app-release.apk ../../out/SweaxDrop-$V-Android.apk
+          else
+            # No release key in CI: build a debug-signed APK to prove the build.
+            ./gradlew assembleDebug --no-daemon
+            cp app/build/outputs/apk/debug/app-debug.apk ../../out/SweaxDrop-$V-Android-ci-debug.apk
+          fi
       - uses: actions/upload-artifact@v4
         with: { name: android, path: out/* }
 

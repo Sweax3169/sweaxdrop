@@ -58,6 +58,10 @@ enum Cmd {
         disk: bool,
         #[arg(long, default_value_t = 3)]
         repeat: u32,
+        #[arg(long, default_value = "loopback")]
+        case: String,
+        #[arg(long)]
+        out: Option<PathBuf>,
     },
     /// The loopback matrix used for docs/benchmarks.md.
     Matrix {
@@ -352,9 +356,12 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.cmd {
         Cmd::Dataset { out, huge_gb } => dataset(&out, huge_gb),
-        Cmd::Loopback { bytes, path, streams, transport: tr, cipher, chunk_mib, disk, repeat } => {
+        Cmd::Loopback { bytes, path, streams, transport: tr, cipher, chunk_mib, disk, repeat, case, out } => {
             let c = if cipher == "chacha" { CipherPref::Chacha } else { CipherPref::Aes };
-            loopback_case("loopback", &path, parse_size(&bytes)?, streams, transport(&tr), c, chunk_mib, disk, repeat)?;
+            let run = loopback_case(&case, &path, parse_size(&bytes)?, streams, transport(&tr), c, chunk_mib, disk, repeat)?;
+            if let Some(o) = out {
+                save_runs(&o, &[run])?;
+            }
             Ok(())
         }
         Cmd::Matrix { data, out, repeat } => {

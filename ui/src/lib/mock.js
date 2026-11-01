@@ -53,6 +53,14 @@ function sampleHistory() {
   ];
 }
 
+function demoSize(p, i) {
+  if (/4K|\.mp4$|\.mov$/i.test(p)) return 2_870_000_000;
+  if (/\.png$/i.test(p)) return 8_400_000;
+  if (/\.pdf$/i.test(p)) return 1_200_000;
+  if (!/\.[a-z0-9]{2,4}$/i.test(p)) return 912_000_000;
+  return 1_800_000 + i * 913_000;
+}
+
 export function createMockBridge(q = new URLSearchParams()) {
   const listeners = new Set();
   const emit = (ev) => {
@@ -206,7 +214,7 @@ export function createMockBridge(q = new URLSearchParams()) {
         case 'send': {
           const peer = ps.find((p) => p.id === args.peer);
           const items = [
-            ...(args.paths || []).map((p, i) => ({ path: p.split(/[\\/]/).pop(), size: 1_800_000 + i * 913_000 })),
+            ...(args.paths || []).map((p, i) => ({ path: p.split(/[\\/]/).pop(), size: demoSize(p, i) })),
             ...(args.sources || []).map((s) => ({ path: s.path, size: s.size || 2_000_000 })),
             ...(args.files || []).map((f) => ({ path: f.name, size: f.size || 2_000_000 })),
           ];

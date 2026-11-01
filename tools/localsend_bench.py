@@ -112,14 +112,17 @@ else:
     sender = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 answered = None
-until = time.time() + 120
+until = time.time() + 300
 while time.time() < until:
-    if len(rl.text) > seen:
-        time.sleep(0.01)
+    if 'Accept?' in rl.text[seen:]:
         r.write('y')
         answered = time.perf_counter() - t0
         break
+    if a.sender == 'proto' and sender.poll() is not None:
+        sys.exit('the LocalSend protocol sender stopped before the request was shown')
     time.sleep(0.005)
+if answered is None:
+    sys.exit('no request reached the receiver')
 
 first = None
 while time.perf_counter() - t0 < 3600:
@@ -127,6 +130,8 @@ while time.perf_counter() - t0 < 3600:
     if first is None and size > 0:
         first = time.perf_counter() - t0
     if n >= len(files) and size >= total:
+        break
+    if 'failed' in rl.text[seen:] and 'Received' in rl.text[seen:]:
         break
     time.sleep(0.02)
 secs = time.perf_counter() - t0
