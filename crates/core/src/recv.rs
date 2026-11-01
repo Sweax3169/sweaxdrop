@@ -246,7 +246,12 @@ pub async fn serve_session(shared: Arc<Shared>, mut ctrl: Stream, fp: [u8; 32], 
             Ok(Err(_)) | Err(_) => return Ok(()),
         };
         match msg {
-            Ctrl::Offer(o) => return receive(shared, ctrl, device, fp, o).await,
+            Ctrl::Offer(o) => {
+                let r = receive(shared, &mut ctrl, device, fp, o).await;
+                let _ = tokio::io::AsyncWriteExt::shutdown(&mut ctrl.write).await;
+                crate::link::linger(&mut ctrl.read, 3).await;
+                return r;
+            }
             Ctrl::Ping { t } => write_ctrl(&mut ctrl.write, &Ctrl::Pong { t }).await?,
             m @ (Ctrl::PairPin { .. } | Ctrl::PairQr { .. }) => {
                 return crate::pairing::respond(&shared, &mut ctrl, &device, fp, m).await;
@@ -276,7 +281,7 @@ fn valid_offer(o: &Offer) -> Result<()> {
     Ok(())
 }
 
-async fn receive(shared: Arc<Shared>, mut ctrl: Stream, sender: DeviceInfo, fp: [u8; 32], offer: Offer) -> Result<()> {
+async fn receive(shared: Arc<Shared>, ctrl: &mut Stream, sender: DeviceInfo, fp: [u8; 32], offer: Offer) -> Result<()> {
     valid_offer(&offer)?;
     let key = (sender.id.clone(), offer.transfer.clone());
     let resumed = if offer.resume { shared.take_partial(&key) } else { None };
@@ -376,7 +381,12 @@ async fn receive(shared: Arc<Shared>, mut ctrl: Stream, sender: DeviceInfo, fp: 
                 lane_count += 1;
                 t.lanes_used.store(lane_count.min(MAX_LANES) as u32, Ordering::Relaxed);
                 let st2 = st.clone();
-                lanes.spawn(async move { recv_lane(st2, lane, s.read).await });
+                lanes.spawn(async move {
+                    let Stream { read, mut write } = s;
+                    let r = recv_lane(st2, lane, read).await;
+                    let _ = tokio::io::AsyncWriteExt::shutdown(&mut write).await;
+                    r
+                });
             }
             r = lanes.join_next(), if !lanes.is_empty() => {
                 match r {
@@ -487,6 +497,8 @@ async fn recv_lane(st: Arc<RecvState>, lane: usize, mut r: BoxRead) -> Result<()
             r.read_exact(&mut hash).await?;
             tx.send(WPiece::End(hash)).await.map_err(|_| anyhow!("writer stopped"))?;
         }
+        // Consume the sender's close (TLS close_notify) before dropping.
+        crate::link::linger(&mut r, 10).await;
         Ok(())
     }
     .await;

@@ -17,7 +17,7 @@ use std::time::Duration;
 
 use anyhow::{anyhow, Context as _, Result};
 use serde::{Deserialize, Serialize};
-use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite};
 use tokio::net::TcpStream;
 use tokio_rustls::TlsConnector;
 
@@ -199,24 +199,33 @@ pub fn quic_endpoint(id: &Identity, pref: CipherPref, bind: SocketAddr) -> Resul
     let mut client = quinn::ClientConfig::new(Arc::new(client_crypto));
     client.transport_config(transport);
 
-    let sock = std::net::UdpSocket::bind(bind)?;
-    let s2 = socket2::SockRef::from(&sock);
+    let domain = if bind.is_ipv6() { socket2::Domain::IPV6 } else { socket2::Domain::IPV4 };
+    let s2 = socket2::Socket::new(domain, socket2::Type::DGRAM, Some(socket2::Protocol::UDP))?;
+    if bind.is_ipv6() {
+        // Windows defaults to v6-only; peers are mostly IPv4.
+        s2.set_only_v6(false)?;
+    }
     let _ = s2.set_recv_buffer_size(8 << 20);
     let _ = s2.set_send_buffer_size(8 << 20);
+    s2.bind(&bind.into())?;
+    let sock: std::net::UdpSocket = s2.into();
     let runtime = quinn::default_runtime().ok_or_else(|| anyhow!("no async runtime"))?;
     let mut ep = quinn::Endpoint::new(quinn::EndpointConfig::default(), Some(server), sock, runtime)?;
     ep.set_default_client_config(client);
     Ok(ep)
 }
 
-/// Wraps a TcpStream that already had its first bytes peeked, used by the
-/// listener that serves both TLS and plain HTTP on one port.
-pub struct Peeked<S> {
-    pub inner: S,
-}
-
-impl<S: AsyncRead + Unpin> AsyncRead for Peeked<S> {
-    fn poll_read(mut self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut ReadBuf<'_>) -> Poll<std::io::Result<()>> {
-        Pin::new(&mut self.inner).poll_read(cx, buf)
-    }
+/// Reads until the other side closes (or `secs` pass) so this end never
+/// closes a socket with unread bytes, which Windows answers with RST.
+pub async fn linger(r: &mut BoxRead, secs: u64) {
+    let mut sink = [0u8; 4096];
+    let _ = tokio::time::timeout(Duration::from_secs(secs), async {
+        loop {
+            match r.read(&mut sink).await {
+                Ok(0) | Err(_) => break,
+                Ok(_) => {}
+            }
+        }
+    })
+    .await;
 }

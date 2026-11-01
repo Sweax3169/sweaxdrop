@@ -121,6 +121,7 @@ async fn send_folder(transport: Transport, streams: u8, chunk: u32) {
     let id = a.send(&b.id(), sources, None, Some(opts)).unwrap();
     assert_eq!(wait_final(&a, &id, 60).await, Phase::Done, "{:?}", a.transfer(&id).unwrap().error.read());
     wait_receiver_done(&b, &id).await;
+    assert_eq!(*a.transfer(&id).unwrap().transport.read(), transport, "no silent fallback");
     check_tree(&db.join("inbox"), &files);
     let t = b.transfer(&id).unwrap();
     assert_eq!(t.files_done.load(std::sync::atomic::Ordering::Relaxed), files.len() as u32);

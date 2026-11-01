@@ -137,6 +137,9 @@ pub fn server_config(id: &Identity, pref: CipherPref) -> Result<rustls::ServerCo
         .with_single_cert(vec![id.cert.clone()], id.key())?;
     cfg.alpn_protocols = vec![ALPN.to_vec()];
     cfg.max_early_data_size = 0;
+    // No session tickets: data streams never read, and unread bytes in a
+    // socket make Windows close it with RST, which can drop data in flight.
+    cfg.send_tls13_tickets = 0;
     Ok(cfg)
 }
 

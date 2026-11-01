@@ -20,7 +20,7 @@ use tokio::sync::mpsc;
 use tokio::task::JoinSet;
 
 use crate::identity::device_id;
-use crate::link::{BoxWrite, Link, Stream, Transport};
+use crate::link::{Link, Stream, Transport};
 use crate::node::Shared;
 use crate::proto::{bits_from_ranges, chunk_count, Ctrl, Offer, PROTO_VERSION};
 use crate::storage::{Reader, SourceItem};
@@ -294,7 +294,7 @@ async fn attempt(shared: &Arc<Shared>, job: &SendJob, resume: bool, accepted_onc
             let mut s = link.open().await?;
             opened.fetch_add(1, Ordering::Relaxed);
             write_ctrl(&mut s.write, &Ctrl::Attach { token }).await?;
-            run_lane(ctx, lane, s.write).await
+            run_lane(ctx, lane, s).await
         });
     };
     for lane in 0..initial {
@@ -367,6 +367,7 @@ async fn attempt(shared: &Arc<Shared>, job: &SendJob, resume: bool, accepted_onc
     };
     set.abort_all();
     let _ = ctrl.write.shutdown().await;
+    crate::link::linger(&mut ctrl.read, 2).await;
     link.close();
     result
 }
@@ -377,7 +378,8 @@ enum Piece {
     Trailer([u8; 32]),
 }
 
-async fn run_lane(ctx: Arc<Ctx>, lane: usize, mut w: BoxWrite) -> Result<()> {
+async fn run_lane(ctx: Arc<Ctx>, lane: usize, s: Stream) -> Result<()> {
+    let Stream { read: mut r, write: mut w } = s;
     let (tx, mut rx) = mpsc::channel::<Piece>(8);
     let rctx = ctx.clone();
     let reader = std::thread::Builder::new()
@@ -399,10 +401,11 @@ async fn run_lane(ctx: Arc<Ctx>, lane: usize, mut w: BoxWrite) -> Result<()> {
     }
     w.write_all(&[TAG_END]).await?;
     w.flush().await?;
-    let _ = reader.join();
-    // Keep the stream open until the receiver has read everything; dropping
-    // the writer would close the socket under bytes still in flight.
+    let _ = tokio::task::spawn_blocking(move || reader.join()).await;
+    // Half-close and wait for the receiver to close its side: the lane only
+    // counts as finished once every byte was read on the other end.
     let _ = w.shutdown().await;
+    crate::link::linger(&mut r, 60).await;
     Ok(())
 }
 
