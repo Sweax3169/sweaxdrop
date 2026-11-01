@@ -39,7 +39,7 @@ struct Slot {
 pub struct RecvState {
     pub t: Arc<Transfer>,
     pub sender: DeviceInfo,
-    chunk: u32,
+    pub(crate) chunk: u32,
     sink: Arc<dyn Sink>,
     pos: HashMap<u32, usize>,
     slots: Vec<Mutex<Slot>>,
@@ -51,7 +51,7 @@ pub struct RecvState {
 }
 
 impl RecvState {
-    fn new(t: Arc<Transfer>, sender: DeviceInfo, chunk: u32, sink: Arc<dyn Sink>, skip: &[u32]) -> Result<Arc<Self>> {
+    pub(crate) fn new(t: Arc<Transfer>, sender: DeviceInfo, chunk: u32, sink: Arc<dyn Sink>, skip: &[u32]) -> Result<Arc<Self>> {
         let mut pos = HashMap::new();
         let mut slots = Vec::new();
         let mut done = 0;
@@ -83,11 +83,11 @@ impl RecvState {
         }))
     }
 
-    fn item(&self, id: u32) -> Option<(usize, &Item)> {
+    pub(crate) fn item(&self, id: u32) -> Option<(usize, &Item)> {
         self.pos.get(&id).map(|&i| (i, &self.t.items[i]))
     }
 
-    fn have(&self) -> Vec<Have> {
+    pub(crate) fn have(&self) -> Vec<Have> {
         self.t
             .items
             .iter()
@@ -99,7 +99,7 @@ impl RecvState {
             .collect()
     }
 
-    fn held_bytes(&self) -> u64 {
+    pub(crate) fn held_bytes(&self) -> u64 {
         self.t
             .items
             .iter()
@@ -134,7 +134,7 @@ impl RecvState {
         Ok(())
     }
 
-    fn file(&self, item: u32) -> Result<Option<Arc<dyn OutFile>>> {
+    pub(crate) fn file(&self, item: u32) -> Result<Option<Arc<dyn OutFile>>> {
         let (i, it) = self.item(item).ok_or_else(|| anyhow!("unknown item"))?;
         let mut s = self.slots[i].lock();
         if s.finished || s.failed {
@@ -146,7 +146,7 @@ impl RecvState {
         Ok(s.out.clone())
     }
 
-    fn chunk_ok(&self, item: u32, index: u32) {
+    pub(crate) fn chunk_ok(&self, item: u32, index: u32) {
         let Some((i, it)) = self.item(item) else { return };
         let finish = {
             let mut s = self.slots[i].lock();
@@ -186,7 +186,7 @@ impl RecvState {
         }
     }
 
-    fn item_error(&self, item: u32) {
+    pub(crate) fn item_error(&self, item: u32) {
         let Some((i, _)) = self.item(item) else { return };
         let out = {
             let mut s = self.slots[i].lock();
@@ -203,11 +203,11 @@ impl RecvState {
         self.progress.notify_one();
     }
 
-    fn complete(&self) -> bool {
+    pub(crate) fn complete(&self) -> bool {
         self.done.load(Ordering::Relaxed) >= self.needed
     }
 
-    fn failed_items(&self) -> Vec<u32> {
+    pub(crate) fn failed_items(&self) -> Vec<u32> {
         self.t.items.iter().zip(&self.slots).filter(|(_, s)| s.lock().failed).map(|(it, _)| it.id).collect()
     }
 
@@ -221,7 +221,7 @@ impl RecvState {
     }
 }
 
-fn chunk_len(size: u64, chunk: u32, index: u32) -> u32 {
+pub(crate) fn chunk_len(size: u64, chunk: u32, index: u32) -> u32 {
     let off = index as u64 * chunk as u64;
     size.saturating_sub(off).min(chunk as u64) as u32
 }

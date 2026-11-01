@@ -178,7 +178,13 @@ impl Shared {
 
     pub fn emit_transfer(&self, t: &Transfer) {
         let v = t.view(false);
-        self.emit(&Event::Transfer { transfer: &v });
+        let ev = Event::Transfer { transfer: &v };
+        self.emit(&ev);
+        if v.peer.model == "browser" {
+            if let Ok(s) = serde_json::to_string(&ev) {
+                self.web.push(&v.peer.id, &s);
+            }
+        }
     }
 
     pub fn transfer(&self, id: &str) -> Option<Arc<Transfer>> {

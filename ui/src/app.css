@@ -1,0 +1,170 @@
+@import '@fontsource-variable/bricolage-grotesque/standard.css';
+@import '@fontsource-variable/martian-mono/standard.css';
+
+/*
+  SweaxDrop design tokens.
+  Two directions carry two colors everywhere: what you send (--send) and
+  what you receive (--recv). Surfaces are separated by tone, not by lines.
+  Palettes only swap the hue tokens; every other token is derived.
+*/
+
+:root {
+  --font: 'Bricolage Grotesque Variable', 'Segoe UI Variable Text', system-ui, sans-serif;
+  --mono: 'Martian Mono Variable', ui-monospace, 'Cascadia Mono', monospace;
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 26px;
+
+  --spring: linear(0, 0.009, 0.035 2.1%, 0.141, 0.281 6.7%, 0.723 12.9%, 0.938 16.7%, 1.017, 1.077, 1.121, 1.149 24.3%, 1.159, 1.163, 1.161, 1.154 29.9%, 1.129 32.8%, 1.051 39.6%, 1.017 43.1%, 0.991, 0.977 51%, 0.974 53.8%, 0.975 57.1%, 0.997 69.8%, 1.003 76.9%, 1);
+  --spring-soft: linear(0, 0.032 3.2%, 0.122 6.4%, 0.506 15.5%, 0.705 21.4%, 0.85 28%, 0.946 35.3%, 1.002 43.6%, 1.026 52.5%, 1.028 62.6%, 1.006 85.5%, 1);
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  color-scheme: light;
+  --bg: #eef0ec;
+  --floor: #e6e8e3;
+  --s1: #f8f9f6;
+  --s2: #ffffff;
+  --s3: #e3e6e0;
+  --s4: #d6dad2;
+  --ink: #12151a;
+  --ink-2: #474e5b;
+  --ink-3: #848b97;
+  --ink-4: #b4b9c1;
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 1px 2px rgba(20, 24, 30, 0.06), 0 8px 24px -12px rgba(20, 24, 30, 0.18);
+  --shadow-lift: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 2px 6px rgba(20, 24, 30, 0.08), 0 22px 44px -18px rgba(20, 24, 30, 0.32);
+
+  --send: #3553ff;
+  --send-ink: #ffffff;
+  --recv: #009b7d;
+  --recv-ink: #ffffff;
+  --ok: #138a52;
+  --warn: #b86e00;
+  --bad: #d83b3f;
+  --focus: #12151a;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0c0e12;
+  --floor: #090b0e;
+  --s1: #13161c;
+  --s2: #1a1e25;
+  --s3: #222730;
+  --s4: #2c323d;
+  --ink: #eef0f4;
+  --ink-2: #a9b0bd;
+  --ink-3: #6d7584;
+  --ink-4: #454c58;
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.7);
+  --shadow-lift: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 4px 10px rgba(0, 0, 0, 0.45), 0 26px 50px -20px rgba(0, 0, 0, 0.85);
+  --send: #6f86ff;
+  --send-ink: #0b0f2a;
+  --recv: #2fd3ad;
+  --recv-ink: #04221b;
+  --ok: #3fcf8e;
+  --warn: #f0b04a;
+  --bad: #ff6b6e;
+  --focus: #eef0f4;
+}
+
+/* Palettes swap the two direction colors. */
+:root[data-palette='ember'] { --send: #e8501f; --recv: #1f8f86; }
+:root[data-theme='dark'][data-palette='ember'] { --send: #ff7a45; --send-ink: #2a0d00; --recv: #4fd1c5; --recv-ink: #022421; }
+:root[data-palette='orchid'] { --send: #8a3ffc; --recv: #0f8fd6; }
+:root[data-theme='dark'][data-palette='orchid'] { --send: #b38bff; --send-ink: #1a0b33; --recv: #4cc3ff; --recv-ink: #021a2b; }
+:root[data-palette='forest'] { --send: #2f6f3e; --recv: #b5651d; }
+:root[data-theme='dark'][data-palette='forest'] { --send: #7bd38d; --send-ink: #0a2410; --recv: #f0a35e; --recv-ink: #2a1503; }
+:root[data-palette='mono'] { --send: #1d2026; --send-ink: #fff; --recv: #6b7280; }
+:root[data-theme='dark'][data-palette='mono'] { --send: #f1f2f4; --send-ink: #0c0e12; --recv: #9aa1ad; --recv-ink: #0c0e12; }
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.4;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+body { overflow: hidden; }
+
+#app { height: 100%; }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+button {
+  cursor: pointer;
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
+button:focus-visible, input:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.num {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-variation-settings: 'wdth' 87.5;
+  letter-spacing: -0.02em;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: var(--r-md);
+  background: var(--s3);
+  font-weight: 560;
+  font-size: 14.5px;
+  white-space: nowrap;
+  transition: transform 0.45s var(--spring), background 0.2s;
+}
+.btn:hover { background: var(--s4); }
+.btn:active { transform: scale(0.96); transition-duration: 0.08s; }
+.btn.primary { background: var(--send); color: var(--send-ink); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.recv { background: var(--recv); color: var(--recv-ink); }
+.btn.ghost { background: transparent; }
+.btn.ghost:hover { background: var(--s3); }
+.btn.small { height: 32px; padding: 0 12px; font-size: 13.5px; border-radius: 10px; }
+.btn.icon { width: 40px; padding: 0; }
+.btn.small.icon { width: 32px; }
+.btn:disabled { opacity: 0.45; pointer-events: none; }
+
+.muted { color: var(--ink-2); }
+.faint { color: var(--ink-3); }
+
+input[type='text'], input[type='search'], input:not([type]), textarea, select {
+  background: var(--s3);
+  border: 0;
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  outline: none;
+  width: 100%;
+}
+input:focus, textarea:focus { background: var(--s4); }
+
+::selection { background: color-mix(in srgb, var(--send) 30%, transparent); }
+
+.scroll { overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--s4) transparent; }
+.scroll::-webkit-scrollbar { width: 8px; }
+.scroll::-webkit-scrollbar-thumb { background: var(--s4); border-radius: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
