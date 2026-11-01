@@ -1,0 +1,65 @@
+name: SweaxDrop
+options:
+  bundleIdPrefix: com.sweaxstudios
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.9"
+    TARGETED_DEVICE_FAMILY: "1,2"
+targets:
+  SweaxDrop:
+    type: application
+    platform: iOS
+    sources:
+      - path: SweaxDrop
+        excludes: ["Info.plist"]
+      - path: ui
+        type: folder
+        buildPhase: resources
+    info:
+      path: SweaxDrop/Info.plist
+      properties:
+        CFBundleDisplayName: SweaxDrop
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchStoryboardName: ""
+        UILaunchScreen:
+          UIColorName: ""
+        UIApplicationSupportsIndirectInputEvents: true
+        UIRequiresFullScreen: false
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        UIBackgroundModes: [processing]
+        BGTaskSchedulerPermittedIdentifiers: [com.sweaxstudios.sweaxdrop.transfer]
+        NSLocalNetworkUsageDescription: SweaxDrop finds your computer and other phones on this Wi-Fi network and sends files to them directly.
+        NSBonjourServices: [_sweaxdrop._tcp]
+        NSPhotoLibraryAddUsageDescription: Photos and videos you receive are saved to your library.
+        NSPhotoLibraryUsageDescription: Choose photos and videos to send.
+        NSCameraUsageDescription: Scan the pairing code shown on your computer.
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Any file
+            LSHandlerRank: Alternate
+            LSItemContentTypes: [public.item, public.data, public.content]
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sweaxstudios.sweaxdrop
+        SWIFT_OBJC_BRIDGING_HEADER: SweaxDrop/Bridging.h
+        LIBRARY_SEARCH_PATHS: $(PROJECT_DIR)/lib
+        OTHER_LDFLAGS: ["-lsweaxdrop", "-lresolv"]
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_BITCODE: NO
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: NO
+    dependencies:
+      - sdk: Network.framework
+      - sdk: Photos.framework
+      - sdk: PhotosUI.framework
+      - sdk: SystemConfiguration.framework
+      - sdk: Security.framework
+      - sdk: UserNotifications.framework

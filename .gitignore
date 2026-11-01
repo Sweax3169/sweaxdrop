@@ -17,3 +17,9 @@ node_modules/
 /apps/desktop/node_modules/
 /tools/node_modules/
 /apps/desktop/src-tauri/gen/
+/apps/ios/lib/
+/apps/ios/ui/
+/apps/ios/SweaxDrop.xcodeproj/
+/apps/ios/build/
+/apps/ios/Payload/
+/out/
