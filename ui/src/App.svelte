@@ -55,7 +55,7 @@
 
     {#if app.error}
       <div class="fatal">
-        <b>{app.kind === 'web' ? t('This code expired. Scan the QR code on the computer again.') : t('Something went wrong')}</b>
+        <b>{app.kind !== 'web' ? t('Something went wrong') : app.error === 'no code' ? t('Open SweaxDrop on your computer and scan its QR code with this phone.') : t('This code expired. Scan the QR code on the computer again.')}</b>
         {#if app.kind !== 'web'}<p class="faint">{app.error}</p>{/if}
       </div>
     {:else if app.wide}

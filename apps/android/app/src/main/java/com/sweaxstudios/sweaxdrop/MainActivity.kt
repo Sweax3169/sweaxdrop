@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
+import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -43,6 +44,7 @@ class MainActivity : Activity() {
         window.setDecorFitsSystemWindows(false)
         window.statusBarColor = Color.TRANSPARENT
         window.navigationBarColor = Color.TRANSPARENT
+        restoreStayReady()
 
         WebView.setWebContentsDebuggingEnabled(BuildConfigFlags.debuggable(this))
         web = WebView(this).apply {
@@ -223,6 +225,22 @@ class MainActivity : Activity() {
 
     // ------------------------------------------------------------ JS bridge
 
+    private fun view(u: Uri) {
+        try {
+            val i = Intent(Intent.ACTION_VIEW, u).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            if (u.scheme == "content") i.setDataAndType(u, contentResolver.getType(u))
+            startActivity(i)
+        } catch (_: Exception) {}
+    }
+
+    /** The "stay ready" choice survives restarts: the core keeps it in its settings file. */
+    private fun restoreStayReady() {
+        try {
+            val f = filesDir.resolve("core/settings.json")
+            if (f.exists() && JSONObject(f.readText()).optBoolean("stay_ready")) TransferService.setStayReady(this, true)
+        } catch (_: Exception) {}
+    }
+
     inner class Bridge {
         @JavascriptInterface
         fun post(message: String) {
@@ -258,12 +276,13 @@ class MainActivity : Activity() {
                 }
                 "open", "openUrl" -> runOnUiThread {
                     val target = args.optString("path").ifEmpty { args.optString("url") }
-                    try {
-                        val u = Uri.parse(target)
-                        val i = Intent(Intent.ACTION_VIEW, u).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        if (u.scheme == "content") i.setDataAndType(u, contentResolver.getType(u))
-                        startActivity(i)
-                    } catch (_: Exception) {}
+                    val u = Uri.parse(target)
+                    if (u.scheme == "file") {
+                        // Small received files are written by path; other apps open them by content uri.
+                        MediaScannerConnection.scanFile(this@MainActivity, arrayOf(u.path), null) { _, cu ->
+                            if (cu != null) runOnUiThread { view(cu) }
+                        }
+                    } else view(u)
                     resolve(id, JSONObject())
                 }
                 else -> reject(id, "unknown op $op")

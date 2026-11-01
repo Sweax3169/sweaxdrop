@@ -90,10 +90,35 @@ What these numbers are, and are not:
 * The differences that survive on Wi-Fi are the ones not caused by raw speed: no
   request per file, starting at once instead of hashing everything first, and
   resuming instead of restarting.
-* Phone numbers over real Wi-Fi need real phones and are added to
-  [docs/benchmarks.md](docs/benchmarks.md) as they are measured. The Android
+* Phone numbers over real Wi-Fi need real phones: the first ones are just below,
+  and more are added to [docs/benchmarks.md](docs/benchmarks.md) as they are measured. The Android
   emulator was used to check that transfers work in both directions and arrive
   byte-identical (SHA-256), not for speed: its virtual network is slow.
+
+### With a real phone, over Wi-Fi
+
+The first measurements with a real phone: a **Redmi Note 13** running the SweaxDrop
+1.0.0 app, on the Wi-Fi of a home router; the PC on that router's Ethernet. One run
+each, four TCP lanes, timed by the Windows app from the first byte to the last.
+
+| Direction | Files | Time | Average | Fastest moment |
+|---|---|---|---|---|
+| PC → phone | One 1 GiB file | 40.7 s | 26.4 MB/s | 62.9 MB/s |
+| PC → phone | 200 files, 723 MB | 23.0 s | 32.9 MB/s | 61.5 MB/s |
+| PC → phone | 1 000 small files, 31 MB | 30.0 s | 1.1 MB/s | 7.8 MB/s |
+| Phone → PC | 4 videos and a photo from the gallery, 253 MB | 6.25 s | 40.5 MB/s | 55.0 MB/s |
+
+* Reading on the phone (phone → PC) averaged 40 MB/s; writing on the phone
+  (PC → phone) 26–33 MB/s. The fastest moments, 55–63 MB/s, are what this Wi-Fi
+  link carried at its best.
+* **Small files were slow on the phone**: about 30 ms each, because the 1.0.0 app
+  created every received file through Android's media provider (three calls into
+  another process per file). Version 1.0.1 writes files up to 4 MiB directly; that
+  change is not yet measured on a phone.
+* LocalSend was not installed on the phone, so there is no side-by-side over
+  Wi-Fi yet. The iPhone connected through the QR code in Safari (after the 1.0.1
+  fix described in the [release notes](docs/release-notes/v1.0.1.md)); a transfer
+  with it is not measured yet.
 
 ## What it does
 
@@ -244,7 +269,7 @@ The full protocol is in [docs/protocol.md](docs/protocol.md).
 
 ### Windows 10 and 11
 
-1. Download `SweaxDrop-1.0.0-Windows-Setup.exe` from the
+1. Download `SweaxDrop-1.0.1-Windows-Setup.exe` from the
    [latest release](https://github.com/Sweax3169/sweaxdrop/releases/latest).
 2. Run it. Windows asks once for administrator rights (UAC): the installer adds
    one inbound firewall rule for `sweaxdrop.exe` so phones can reach it, and the
@@ -257,7 +282,7 @@ After installing, *Send to → SweaxDrop* appears in Explorer's right-click menu
 
 ### Android 10 and newer
 
-1. On the phone, download `SweaxDrop-1.0.0-Android.apk` from the
+1. On the phone, download `SweaxDrop-1.0.1-Android.apk` from the
    [latest release](https://github.com/Sweax3169/sweaxdrop/releases/latest).
 2. Open it. Android asks to allow installing apps from your browser; allow it for
    this install.
@@ -277,7 +302,7 @@ After installing, *Send to → SweaxDrop* appears in Explorer's right-click menu
 
 Apple only lets apps onto an iPhone that are signed for that device, and signing
 needs an Apple ID. This repository's CI builds the app on a macOS runner without
-signing (`SweaxDrop-1.0.0-iOS-unsigned.ipa`); you sign and install it with your own
+signing (`SweaxDrop-1.0.1-iOS-unsigned.ipa`); you sign and install it with your own
 Apple ID through a sideloading tool. Your Apple ID and password are typed only into
 Apple's sign-in inside that tool, on your own PC.
 

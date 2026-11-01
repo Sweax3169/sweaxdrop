@@ -29,7 +29,7 @@ export function createWebBridge() {
   };
   const hash = new URLSearchParams(location.hash.slice(1));
   const secret = hash.get('s') || '';
-  if (location.hash) history.replaceState(null, '', location.pathname);
+  if (location.hash) window.history.replaceState(null, '', location.pathname);
   let saved = {};
   try {
     saved = JSON.parse(sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY) || '{}');
@@ -45,14 +45,15 @@ export function createWebBridge() {
     palette: localStorage.getItem('swx-palette') || 'tide',
     lang: localStorage.getItem('swx-lang') || '',
   };
-  let history = [];
+  let past = [];
   try {
-    history = JSON.parse(localStorage.getItem('swx-history') || '[]');
+    past = JSON.parse(localStorage.getItem('swx-history') || '[]');
   } catch {}
 
   const me = { id: 'THISPHONE', name: phoneName(), platform: platformName(), model: 'browser', version: '' };
 
   async function hello() {
+    if (!secret && !session) throw new Error('no code');
     const r = await fetch('/api/w/hello', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-swx-key': secret },
@@ -104,9 +105,9 @@ export function createWebBridge() {
   }
 
   function saveHistory(entry) {
-    history = [entry, ...history].slice(0, 100);
+    past = [entry, ...past].slice(0, 100);
     try {
-      localStorage.setItem('swx-history', JSON.stringify(history));
+      localStorage.setItem('swx-history', JSON.stringify(past));
     } catch {}
     emit({ type: 'history', entry });
   }
@@ -243,7 +244,7 @@ export function createWebBridge() {
             settings: { ...local, name: me.name, receive: 'everyone', streams: 4 },
             peers: [pcPeer()],
             transfers: [],
-            history,
+            history: past,
             qr: '',
           };
         }
@@ -286,9 +287,9 @@ export function createWebBridge() {
           return { ok: true };
         }
         case 'history':
-          return { ok: true, history };
+          return { ok: true, history: past };
         case 'history_clear':
-          history = [];
+          past = [];
           localStorage.removeItem('swx-history');
           return { ok: true };
         default:

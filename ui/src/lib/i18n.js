@@ -157,6 +157,7 @@ const tr = {
   'Connected to {name}': '{name} cihazına bağlı',
   'Connecting to the computer…': 'Bilgisayara bağlanıyor…',
   'This code expired. Scan the QR code on the computer again.': 'Bu kodun süresi doldu. Bilgisayardaki QR kodu tekrar okut.',
+  'Open SweaxDrop on your computer and scan its QR code with this phone.': 'Bilgisayarda SweaxDrop’u aç ve QR kodunu bu telefonla okut.',
   'Lost the connection. Trying again…': 'Bağlantı koptu. Tekrar deneniyor…',
   'Sending from this phone': 'Bu telefondan gönder',
   'Choose files': 'Dosya seç',

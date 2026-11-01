@@ -104,12 +104,33 @@ Settings for networks where it does better.
 
 ## Phones over Wi-Fi
 
-Real-phone measurements need real phones on a real network. They are added here
-with the phone model, the Wi-Fi standard and channel width, and whether the PC is
-on Ethernet or Wi-Fi. The Android emulator was used only to check correctness:
-a 200 MB file from the Android app to the PC and a folder of photos from the PC to
-the app arrived byte-identical (SHA-256) and landed in the gallery; the emulator's
-virtual network ran at about 3.5 MB/s, which says nothing about phones.
+The first measurements with a real phone: a **Redmi Note 13** running the SweaxDrop
+1.0.0 app, on the Wi-Fi of a home router; the PC on that router's Ethernet. One run
+each, four TCP lanes, timed by the Windows app from the first byte to the last.
+
+| Direction | Files | Time | Average | Fastest moment |
+|---|---|---|---|---|
+| PC → phone | One 1 GiB file | 40.7 s | 26.4 MB/s | 62.9 MB/s |
+| PC → phone | 200 files, 723 MB | 23.0 s | 32.9 MB/s | 61.5 MB/s |
+| PC → phone | 1 000 small files, 31 MB | 30.0 s | 1.1 MB/s | 7.8 MB/s |
+| Phone → PC | 4 videos and a photo from the gallery, 253 MB | 6.25 s | 40.5 MB/s | 55.0 MB/s |
+
+* Reading on the phone (phone → PC) averaged 40 MB/s; writing on the phone
+  (PC → phone) 26–33 MB/s. The fastest moments, 55–63 MB/s, are what this Wi-Fi
+  link carried at its best.
+* **Small files were slow on the phone**: about 30 ms each, because the 1.0.0 app
+  created every received file through Android's media provider (three calls into
+  another process per file). Version 1.0.1 writes files up to 4 MiB directly; that
+  change is not yet measured on a phone.
+* LocalSend was not installed on the phone, so there is no side-by-side over
+  Wi-Fi yet. The iPhone connected through the QR code in Safari (after the 1.0.1
+  fix described in the [release notes](release-notes/v1.0.1.md)); a transfer
+  with it is not measured yet.
+
+The Android emulator was used only to check correctness: a 200 MB file from the
+Android app to the PC and a folder of photos from the PC to the app arrived
+byte-identical (SHA-256) and landed in the gallery; its virtual network ran at
+about 3.5 MB/s, which says nothing about phones.
 
 ## Reproduce
 

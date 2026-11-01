@@ -97,6 +97,9 @@ h2 { font-size: clamp(32px, 4.4vw, 56px); line-height: 1.04; letter-spacing: -.0
 .bench .bar { height: 14px; border-radius: 7px; background: var(--s3); overflow: hidden; }
 .bench .bar i { display: block; height: 100%; border-radius: 7px; width: 0; transition: width 1.4s var(--spring); }
 .bench .row.sx i { background: var(--send); } .bench .row.ls i { background: var(--ink3); }
+.bench .row.rx i { background: var(--recv); }
+.bench.phone { margin-top: 0; }
+.bench.phone .ratio { color: var(--ink3); font-family: inherit; font-size: 13.5px; margin-top: 12px; }
 .bench .val { font-family: Mono, monospace; font-size: 13px; text-align: right; font-stretch: 87.5%; }
 .bench .ratio { font-family: Mono, monospace; color: var(--recv); font-size: 13px; margin-top: 6px; }
 @media (max-width: 680px) { .bench .row { grid-template-columns: 1fr; gap: 4px; } .bench .val { text-align: left; } }

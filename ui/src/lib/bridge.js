@@ -187,9 +187,10 @@ export function detectBridge() {
   if (window.__TAURI__?.core) return createTauriBridge();
   if (window.SweaxNative?.post) return createNativeBridge('android', (m) => window.SweaxNative.post(m));
   if (window.webkit?.messageHandlers?.swx) return createNativeBridge('ios', (m) => window.webkit.messageHandlers.swx.postMessage(m));
-  if (location.protocol.startsWith('http') && /^\/api\/w|^\/$|index\.html$/.test(location.pathname) && location.hash.includes('s=')) {
-    return createWebBridge();
-  }
-  if (location.protocol.startsWith('http') && sessionStorage.getItem('swx-web')) return createWebBridge();
+  // A computer serves the browser client over plain http; the website and the
+  // recorder ask for the demo explicitly. Never fall back to pretend devices
+  // on a page a computer served: it asks for the QR code instead.
+  if (location.protocol === 'http:' && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return createWebBridge();
+  if (location.hash.includes('s=') || sessionStorage.getItem('swx-web')) return createWebBridge();
   return createMockBridge(q);
 }

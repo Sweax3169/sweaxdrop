@@ -88,10 +88,33 @@ Bu sayılar neyi gösterir, neyi göstermez:
 * Wi-Fi'da da kalan farklar ham hızdan gelmeyenlerdir: dosya başına istek yok,
   önce her şeyi hash'lemek yerine hemen başlamak, baştan başlamak yerine kaldığı
   yerden sürmek.
-* Gerçek Wi-Fi'da telefon sayıları gerçek telefon ister; ölçüldükçe
-  [docs/benchmarks.md](docs/benchmarks.md)'ye eklenir. Android emülatörü hız için
+* Gerçek Wi-Fi'da telefon sayıları gerçek telefon ister: ilkleri hemen aşağıda,
+  yenileri ölçüldükçe [docs/benchmarks.md](docs/benchmarks.md)'ye eklenir. Android emülatörü hız için
   değil, aktarımın iki yönde çalıştığını ve dosyaların bayt bayt aynı (SHA-256)
   geldiğini doğrulamak için kullanıldı: sanal ağı yavaştır.
+
+### Gerçek bir telefonla, Wi-Fi üzerinden
+
+Gerçek telefonla ilk ölçümler: SweaxDrop 1.0.0 uygulaması kurulu bir **Redmi Note 13**,
+evdeki modemin Wi-Fi'ında; bilgisayar aynı modeme kabloyla bağlı. Her biri tek
+ölçüm, dört TCP şeridi; süreyi Windows uygulaması ilk bayttan son bayta kadar tuttu.
+
+| Yön | Dosyalar | Süre | Ortalama | En hızlı an |
+|---|---|---|---|---|
+| PC → telefon | Tek 1 GiB dosya | 40,7 sn | 26,4 MB/sn | 62,9 MB/sn |
+| PC → telefon | 200 dosya, 723 MB | 23,0 sn | 32,9 MB/sn | 61,5 MB/sn |
+| PC → telefon | 1 000 küçük dosya, 31 MB | 30,0 sn | 1,1 MB/sn | 7,8 MB/sn |
+| Telefon → PC | Galeriden 4 video ve 1 fotoğraf, 253 MB | 6,25 sn | 40,5 MB/sn | 55,0 MB/sn |
+
+* Telefondan okuma (telefon → PC) ortalama 40 MB/sn; telefona yazma (PC → telefon)
+  26–33 MB/sn. 55–63 MB/sn'lik en hızlı anlar bu Wi-Fi bağlantısının en iyi hâli.
+* **Küçük dosyalar telefonda yavaştı**: dosya başına yaklaşık 30 ms, çünkü 1.0.0
+  uygulaması gelen her dosyayı Android'in medya sağlayıcısı üzerinden oluşturuyordu
+  (dosya başına başka bir sürece üç çağrı). 1.0.1, 4 MiB'a kadar dosyaları doğrudan
+  yazıyor; bu değişiklik henüz telefonda ölçülmedi.
+* Telefonda LocalSend kurulu değildi; Wi-Fi'da yan yana karşılaştırma henüz yok.
+  iPhone, Safari'de QR kodla bağlandı ([sürüm notlarındaki](docs/release-notes/v1.0.1.md)
+  1.0.1 düzeltmesinden sonra); onunla bir aktarım henüz ölçülmedi.
 
 ## Neler yapar
 
@@ -247,7 +270,7 @@ Protokolün tamamı [docs/protocol.md](docs/protocol.md)'de.
 ### Windows 10 ve 11
 
 1. [Son sürümden](https://github.com/Sweax3169/sweaxdrop/releases/latest)
-   `SweaxDrop-1.0.0-Windows-Setup.exe` dosyasını indir.
+   `SweaxDrop-1.0.1-Windows-Setup.exe` dosyasını indir.
 2. Çalıştır. Windows bir kez yönetici izni ister (UAC): kurulum, telefonların
    ulaşabilmesi için `sweaxdrop.exe` için tek bir gelen trafik güvenlik duvarı kuralı
    ekler, kaldırıcı onu siler. Uygulamanın kendisi güvenlik duvarı ayarlarına asla
@@ -261,7 +284,7 @@ Kurulumdan sonra Gezgin'in sağ tık menüsünde *Gönder → SweaxDrop* görün
 ### Android 10 ve üstü
 
 1. Telefonda [son sürümden](https://github.com/Sweax3169/sweaxdrop/releases/latest)
-   `SweaxDrop-1.0.0-Android.apk` dosyasını indir.
+   `SweaxDrop-1.0.1-Android.apk` dosyasını indir.
 2. Aç. Android tarayıcından uygulama yüklemeye izin vermeni ister; bu kurulum için
    izin ver.
 3. SweaxDrop'u aç ve bildirimlere izin ver (ilerleme ve gelen dosyalar).
@@ -280,7 +303,7 @@ Kurulumdan sonra Gezgin'in sağ tık menüsünde *Gönder → SweaxDrop* görün
 
 Apple bir iPhone'a yalnız o cihaz için imzalanmış uygulamaların girmesine izin verir
 ve imzalamak bir Apple Kimliği ister. Bu deponun CI'ı uygulamayı bir macOS
-makinesinde imzasız derler (`SweaxDrop-1.0.0-iOS-unsigned.ipa`); sen onu bir yan
+makinesinde imzasız derler (`SweaxDrop-1.0.1-iOS-unsigned.ipa`); sen onu bir yan
 yükleme aracıyla kendi Apple Kimliğinle imzalayıp kurarsın. Apple Kimliğin ve
 şifren yalnız o aracın içindeki Apple girişine, kendi PC'nde yazılır.
 

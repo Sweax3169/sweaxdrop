@@ -93,8 +93,19 @@
 
     <section class="speed reveal" id="speed">
       <h2 data-i="speed_h">Measured, not promised</h2>
-      <p class="sub" data-i="speed_p">Every number on this page comes from <code>sweaxdrop-bench</code> in the repository, run on one PC (AMD Ryzen 5 7600, NVMe SSD, Windows 11) against the official LocalSend 1.18.2 command-line app, with the same files on the same drive. Wi-Fi results with real phones are added as they are measured.</p>
+      <p class="sub" data-i="speed_p">Every number on this page comes from <code>sweaxdrop-bench</code> in the repository, run on one PC (AMD Ryzen 5 7600, NVMe SSD, Windows 11) against the official LocalSend 1.18.2 command-line app, with the same files on the same drive. Below them, the first results with a real phone over Wi-Fi.</p>
       <div id="bench" class="bench"></div>
+      <div class="bench phone">
+        <div class="case">
+          <h3 data-i="ph_h">With a real phone, over Wi-Fi</h3>
+          <div class="what" data-i="ph_what">Redmi Note 13 on a home router's Wi-Fi, the PC on Ethernet. One run each, average speed.</div>
+          <div class="row sx"><span data-i="ph_r1">PC → phone · one 1 GiB file</span><div class="bar"><i style="width:65%"></i></div><span class="val" data-i="ph_v1">26.4 MB/s · 40.7 s</span></div>
+          <div class="row sx"><span data-i="ph_r2">PC → phone · 200 files, 723 MB</span><div class="bar"><i style="width:81%"></i></div><span class="val" data-i="ph_v2">32.9 MB/s · 23.0 s</span></div>
+          <div class="row sx"><span data-i="ph_r3">PC → phone · 1 000 small files</span><div class="bar"><i style="width:3%"></i></div><span class="val" data-i="ph_v3">1.1 MB/s · 30.0 s</span></div>
+          <div class="row rx"><span data-i="ph_r4">Phone → PC · 4 videos and a photo</span><div class="bar"><i style="width:100%"></i></div><span class="val" data-i="ph_v4">40.5 MB/s · 6.25 s</span></div>
+          <div class="ratio" data-i="ph_note">The 1.0.0 app wrote small files slowly on the phone, about 30 ms each; 1.0.1 writes them directly, not yet measured on a phone.</div>
+        </div>
+      </div>
       <p class="note" data-i="speed_note">Over Wi-Fi the radio is the limit for one big file. The differences that stay are in many small files, in the time to start, and in what happens when the connection drops.</p>
     </section>
 

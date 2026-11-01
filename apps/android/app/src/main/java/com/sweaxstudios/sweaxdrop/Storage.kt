@@ -3,6 +3,7 @@ package com.sweaxstudios.sweaxdrop
 import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
 import android.os.ParcelFileDescriptor
 import android.provider.DocumentsContract
@@ -10,6 +11,10 @@ import android.provider.MediaStore
 import android.provider.OpenableColumns
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * Where received files go and where sent files come from.
@@ -37,6 +42,11 @@ class Storage(private val ctx: Context) {
         val gallery = req.optBoolean("gallery", true)
         val name = path.substringAfterLast('/')
         val sub = path.substringBeforeLast('/', "")
+        // Small files skip the media provider: three provider calls per file
+        // made a thousand small files take half a minute.
+        if (dest.isEmpty() && Build.VERSION.SDK_INT >= 30 && req.optLong("size", Long.MAX_VALUE) <= DIRECT_MAX) {
+            createDirect(sub, name, mime, gallery)?.let { return it }
+        }
         return try {
             val uri = (if (dest.isNotEmpty()) createInTree(Uri.parse(dest), sub, name, mime) else createInMediaStore(sub, name, mime, gallery))
                 ?: return ""
@@ -45,6 +55,38 @@ class Storage(private val ctx: Context) {
         } catch (e: Exception) {
             ""
         }
+    }
+
+    /** A file created by path in shared storage (Android 11+, no permission needed for our own files). */
+    private fun createDirect(sub: String, name: String, mime: String, gallery: Boolean): String? = try {
+        val base = when {
+            gallery && mime.startsWith("image/") -> Environment.DIRECTORY_PICTURES
+            gallery && mime.startsWith("video/") -> Environment.DIRECTORY_MOVIES
+            else -> Environment.DIRECTORY_DOWNLOADS
+        }
+        val dir = File(Environment.getExternalStoragePublicDirectory(base), listOf("SweaxDrop", sub).filter { it.isNotEmpty() }.joinToString("/"))
+        if (!dir.isDirectory && !dir.mkdirs() && !dir.isDirectory) null
+        else {
+            val f = uniqueFile(dir, name)
+            val fd = ParcelFileDescriptor.open(f, ParcelFileDescriptor.MODE_READ_WRITE).detachFd()
+            JSONObject().put("fd", fd).put("handle", Uri.fromFile(f).toString()).toString()
+        }
+    } catch (e: Exception) {
+        null
+    }
+
+    /** name, then "name (1)", "name (2)"...; created atomically, so parallel writers never share a file. */
+    private fun uniqueFile(dir: File, name: String): File {
+        val dot = name.lastIndexOf('.').takeIf { it > 0 } ?: name.length
+        val stem = name.substring(0, dot)
+        val ext = name.substring(dot)
+        var f = File(dir, name)
+        var i = 1
+        while (!f.createNewFile()) {
+            f = File(dir, "$stem ($i)$ext")
+            if (++i > 9999) throw java.io.IOException("no free name for $name")
+        }
+        return f
     }
 
     private fun createInMediaStore(sub: String, name: String, mime: String, gallery: Boolean): Uri? {
@@ -85,6 +127,15 @@ class Storage(private val ctx: Context) {
 
     fun finishOutput(handle: String, ok: Boolean, mtime: Long): String {
         val uri = Uri.parse(handle)
+        if (uri.scheme == "file") {
+            val f = File(uri.path ?: return "")
+            if (!ok) {
+                f.delete()
+                return ""
+            }
+            if (mtime > 0) f.setLastModified(mtime)
+            return handle
+        }
         return try {
             if (!ok) {
                 try {
@@ -120,6 +171,12 @@ class Storage(private val ctx: Context) {
                     if (relPath == null && n >= 0) name = c.getString(n) ?: name
                     if (s >= 0 && !c.isNull(s)) size = c.getLong(s)
                     if (m >= 0 && !c.isNull(m)) mtime = c.getLong(m)
+                    // The photo picker hides real names behind the media id ("1000179895.mp4").
+                    if (relPath == null && PICKER_NAME.matches(name)) {
+                        val t = c.getColumnIndex(MediaStore.MediaColumns.DATE_TAKEN)
+                        val taken = if (t >= 0 && !c.isNull(t)) c.getLong(t) else mtime
+                        name = cameraName(name, resolver.getType(uri) ?: guessMime(name), taken)
+                    }
                 }
             }
         } catch (_: Exception) {}
@@ -181,6 +238,19 @@ class Storage(private val ctx: Context) {
     }
 
     companion object {
+        /** Files up to this size are written by path instead of through the media provider. */
+        const val DIRECT_MAX = 4L shl 20
+
+        private val PICKER_NAME = Regex("""^\d+(\.[A-Za-z0-9]+)?$""")
+
+        /** "IMG_20261102_013455.jpg" / "VID_….mp4", like the camera names them. */
+        fun cameraName(picked: String, mime: String, takenMs: Long): String {
+            val ext = picked.substringAfterLast('.', "").ifEmpty { mime.substringAfter('/', "bin") }
+            val prefix = if (mime.startsWith("video/")) "VID" else "IMG"
+            val stamp = if (takenMs > 0) SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date(takenMs)) else picked.substringBefore('.')
+            return "${prefix}_$stamp.$ext"
+        }
+
         fun guessMime(name: String): String {
             val ext = name.substringAfterLast('.', "").lowercase()
             return android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext) ?: "application/octet-stream"
