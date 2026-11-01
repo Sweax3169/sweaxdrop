@@ -6,6 +6,7 @@
   import Sheet from './Sheet.svelte';
   import QR from './QR.svelte';
   import Icon from './Icon.svelte';
+  import Scanner from './Scanner.svelte';
 
   let { onclose, peer = null } = $props();
 
@@ -15,6 +16,7 @@
   let digits = $state('');
   let busy = $state(false);
   let address = $state('');
+  let scanning = $state(false);
 
   const candidates = $derived(app.peers.filter((p) => p.online && p.kind !== 'web' && !p.trusted));
 
@@ -52,7 +54,11 @@
   }
 
   async function scan() {
-    const text = await getBridge().scan();
+    scanning = true;
+  }
+
+  async function scanned(text) {
+    scanning = false;
     if (!text) return;
     busy = true;
     try {
@@ -99,6 +105,8 @@
         <div class="faint small">{t('Valid for 5 minutes')} · {app.device?.name}</div>
       </div>
     </div>
+  {:else if scanning}
+    <Scanner onresult={scanned} oncancel={() => (scanning = false)} />
   {:else}
     <div class="enter">
       {#if app.caps.scan}

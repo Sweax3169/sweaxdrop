@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Device-to-device traffic is TLS on raw sockets; the app makes no
+     cleartext HTTP requests itself. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

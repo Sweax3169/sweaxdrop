@@ -1,0 +1,19 @@
+[package]
+name = "sweaxdrop-ffi"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "SweaxDrop core for Android (JNI) and iOS (C ABI)"
+
+[lib]
+name = "sweaxdrop"
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+serde_json = "1.0.154"
+sweaxdrop-core = { version = "1.0.0", path = "../core", features = ["embed-ui"] }
+
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.14"
+jni = "0.21"
+log = "0.4.35"

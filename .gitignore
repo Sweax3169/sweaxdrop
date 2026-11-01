@@ -13,3 +13,7 @@ node_modules/
 .DS_Store
 *.log
 /.private/
+/apps/android/gradle/wrapper/dists/
+/apps/desktop/node_modules/
+/tools/node_modules/
+/apps/desktop/src-tauri/gen/

@@ -1,5 +1,5 @@
 <script>
-  import { app, answer, getBridge } from '../lib/state.svelte.js';
+  import { app, answer, getBridge, saveLabel } from '../lib/state.svelte.js';
   import { t } from '../lib/i18n.js';
   import { bytes, fileName, filesLabel, kindOf } from '../lib/format.js';
   import Sheet from './Sheet.svelte';
@@ -83,10 +83,10 @@
     </div>
   {/if}
 
-  {#if app.caps.saveDir && items.length && !offer.web}
+  {#if app.kind === 'tauri' && items.length && !offer.web}
     <div class="save">
       <span class="faint">{t('Save to')}</span>
-      <span class="path" title={saveDir || app.settings.save_dir}>{saveDir || app.settings.save_dir || 'Downloads\\SweaxDrop'}</span>
+      <span class="path" title={saveDir || saveLabel()}>{saveDir || saveLabel()}</span>
       <button class="btn ghost small" onclick={pickDir}>{t('Change')}</button>
     </div>
   {/if}

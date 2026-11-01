@@ -33,7 +33,7 @@
   .wide { left: 50%; top: 50%; translate: -50% -50%; border-radius: var(--r-xl); padding: 24px; max-width: calc(100% - 48px); }
   .narrow {
     left: 0; right: 0; bottom: 0; border-radius: var(--r-xl) var(--r-xl) 0 0;
-    padding: 10px 18px calc(18px + env(safe-area-inset-bottom));
+    padding: 10px 18px calc(18px + var(--safe-bottom));
     max-height: calc(100% - 40px);
   }
   .grip { width: 38px; height: 4px; border-radius: 4px; background: var(--s4); margin: 0 auto 14px; }

@@ -125,6 +125,8 @@ function onEvent(ev) {
 
 export async function init() {
   bridge = detectBridge();
+  // Test and demo hook (the media recorder and smoke tests drive the UI through it).
+  window.__swxApp = { app, call: (cmd, args) => bridge.call(cmd, args), stage, sendTo };
   app.kind = bridge.kind;
   app.caps = bridge.caps;
   bridge.on(onEvent);
@@ -137,12 +139,27 @@ export async function init() {
     if (a.type === 'stage' && a.paths?.length) stage(a.paths.map((p) => ({ path: p })));
     if (a.type === 'pick-files') pick('files');
     if (a.type === 'pair') app.sheet = { type: 'pair', peer: null };
+    if (a.type === 'stage' && a.sources?.length) stage(a.sources.map((s) => ({ ...s, name: fileName(s.path) })));
+    if (a.type === 'text' && a.text) app.sheet = { type: 'compose', peer: null, startWith: 'text', text: a.text };
   });
+  // Android back button: close the top sheet first.
+  window.__swxBack = () => {
+    if (app.sheet) {
+      app.sheet = null;
+      return true;
+    }
+    if (app.tab !== 'send') {
+      app.tab = 'send';
+      return true;
+    }
+    return false;
+  };
   try {
     await refresh();
     const launch = (await bridge.launchPaths?.()) || [];
     if (launch.length) stage(launch.map((p) => ({ path: p })));
     app.ready = true;
+    bridge.ready?.();
   } catch (e) {
     app.error = String(e.message || e);
     app.ready = true;
@@ -277,3 +294,19 @@ export const sortedTransfers = () =>
 
 export const activeTransfers = () =>
   sortedTransfers().filter((t) => !['done', 'failed', 'cancelled', 'declined'].includes(t.phase) || Date.now() - (t.finished_ms || 0) < 12_000);
+
+/** Asks the host for a save location: a path (desktop) or {uri, label} (phones). */
+export async function chooseSaveDir() {
+  const d = await bridge.pickDir();
+  if (!d) return null;
+  if (typeof d === 'string') {
+    await setSetting({ save_dir: d });
+    return d;
+  }
+  await setSetting({ save_uri: d.uri, save_label: d.label });
+  return d.label;
+}
+
+export function saveLabel(s = app.settings) {
+  return s.save_label || s.save_dir || (app.kind === 'android' ? 'Download/SweaxDrop' : app.kind === 'ios' ? 'Files › SweaxDrop' : 'Downloads\\SweaxDrop');
+}

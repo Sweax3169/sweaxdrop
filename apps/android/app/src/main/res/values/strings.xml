@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SweaxDrop</string>
+    <string name="share_label">Send with SweaxDrop</string>
+    <string name="channel_transfers">Transfers</string>
+    <string name="channel_requests">Incoming files</string>
+    <string name="channel_ready">Ready to receive</string>
+    <string name="ready">Ready to receive files</string>
+    <string name="sending">Sending</string>
+    <string name="receiving">Receiving</string>
+</resources>

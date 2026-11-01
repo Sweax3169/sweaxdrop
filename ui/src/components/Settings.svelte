@@ -1,5 +1,5 @@
 <script>
-  import { app, call, getBridge, setSetting } from '../lib/state.svelte.js';
+  import { app, call, chooseSaveDir, saveLabel, setSetting } from '../lib/state.svelte.js';
   import { t } from '../lib/i18n.js';
   import Icon from './Icon.svelte';
   import Logo from './Logo.svelte';
@@ -20,8 +20,7 @@
   const web = $derived(app.kind === 'web');
 
   async function pickDir() {
-    const d = await getBridge().pickDir();
-    if (d) setSetting({ save_dir: d });
+    await chooseSaveDir();
   }
   function saveName() {
     if (name.trim() && name.trim() !== s.name) setSetting({ name: name.trim() });
@@ -61,14 +60,16 @@
       {#if app.caps.saveDir}
         <div class="row">
           <span>{t('Save to')}</span>
-          <button class="path" onclick={pickDir} title={s.save_dir}>
-            <Icon name="folder" size={16} /><span>{s.save_dir || 'Downloads\\SweaxDrop'}</span>
+          <button class="path" onclick={pickDir} title={saveLabel(s)}>
+            <Icon name="folder" size={16} /><span>{saveLabel(s)}</span>
           </button>
+          {#if s.save_uri || s.save_dir}<button class="btn ghost small" onclick={() => setSetting({ save_uri: '', save_label: '', save_dir: '' })}>{t('Reset')}</button>{/if}
         </div>
       {/if}
       {@render toggle('auto_accept_trusted', t('Accept paired devices without asking'))}
       {@render toggle('copy_text', t('Put text from paired devices on the clipboard'))}
       {#if app.kind === 'android' || app.kind === 'ios'}{@render toggle('media_to_gallery', t('Photos and videos go to the gallery'))}{/if}
+      {#if app.kind === 'android'}{@render toggle('stay_ready', t('Stay ready in the background'))}{/if}
       {@render toggle('notify', t('Notifications'))}
       {#if desktop}{@render toggle('open_when_done', t('Open the folder when a transfer finishes'))}{/if}
       {@render toggle('web_client', t('Browser client for phones without the app'))}

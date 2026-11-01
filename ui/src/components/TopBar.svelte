@@ -74,7 +74,7 @@
 <style>
   .top {
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: calc(10px + env(safe-area-inset-top)) 16px 10px; min-height: 56px; user-select: none;
+    padding: calc(10px + var(--safe-top)) 16px 10px; min-height: 56px; user-select: none;
   }
   .top.tauri { padding-right: 0; padding-top: 6px; min-height: 50px; }
   .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }

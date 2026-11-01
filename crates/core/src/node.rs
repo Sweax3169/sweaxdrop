@@ -285,7 +285,7 @@ impl Shared {
         let dir = save_dir.map(str::to_string).filter(|d| !d.is_empty()).unwrap_or(s.save_dir);
         if dir.is_empty() {
             if let Some(p) = &self.platform {
-                return Arc::new(PlatformSink { platform: p.clone() });
+                return Arc::new(PlatformSink { platform: p.clone(), dest: s.save_uri.clone(), gallery: s.media_to_gallery });
             }
             return Arc::new(FsSink { root: default_save_dir() });
         }

@@ -69,6 +69,9 @@ pub struct OutputRequest {
     pub size: u64,
     pub mime: Option<String>,
     pub sender: String,
+    /// Where the user asked files to go (platform-specific, may be empty).
+    pub dest: String,
+    pub gallery: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -436,6 +439,8 @@ impl Sink for NullSink {
 /// Documents folder or Photos on iOS).
 pub struct PlatformSink {
     pub platform: Arc<dyn Platform>,
+    pub dest: String,
+    pub gallery: bool,
 }
 
 struct PlatformOut {
@@ -452,6 +457,8 @@ impl Sink for PlatformSink {
             size: item.size,
             mime: item.mime.clone(),
             sender: sender.into(),
+            dest: self.dest.clone(),
+            gallery: self.gallery,
         };
         let h = self.platform.create_output(&req)?;
         let f = file_from_fd(h.fd)?;

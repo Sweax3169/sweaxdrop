@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="share_label">SweaxDrop ile gönder</string>
+    <string name="channel_transfers">Aktarımlar</string>
+    <string name="channel_requests">Gelen dosyalar</string>
+    <string name="channel_ready">Almaya hazır</string>
+    <string name="ready">Dosya almaya hazır</string>
+    <string name="sending">Gönderiliyor</string>
+    <string name="receiving">Alınıyor</string>
+</resources>

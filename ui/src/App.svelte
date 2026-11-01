@@ -139,7 +139,7 @@
   .pane { flex: 1; min-height: 0; padding: 0 4px 4px; }
 
   .mobile { flex: 1; min-height: 0; padding: 0 14px 24px; display: flex; flex-direction: column; gap: 16px; }
-  .mobile-nav { display: grid; grid-template-columns: repeat(3, 1fr); padding: 6px 10px calc(6px + env(safe-area-inset-bottom)); background: var(--s1); box-shadow: 0 -1px 0 var(--s3); }
+  .mobile-nav { display: grid; grid-template-columns: repeat(3, 1fr); padding: 6px 10px calc(6px + var(--safe-bottom)); background: var(--s1); box-shadow: 0 -1px 0 var(--s3); }
   .mobile-nav button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px; font-size: 11.5px; font-weight: 600; color: var(--ink-3); border-radius: 12px; transition: color 0.2s; }
   .mobile-nav button.on { color: var(--ink); }
   .mobile-nav .ic { position: relative; display: grid; place-items: center; width: 52px; height: 30px; border-radius: 15px; transition: background 0.35s var(--spring); }

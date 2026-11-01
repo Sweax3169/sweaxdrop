@@ -11,6 +11,7 @@ import { createMockBridge } from './mock.js';
 function nativeChannel(post) {
   const pending = new Map();
   const listeners = new Set();
+  const actions = new Set();
   let seq = 0;
   window.__swx = {
     resolve(id, json) {
@@ -28,6 +29,18 @@ function nativeChannel(post) {
       if (!p) return;
       pending.delete(id);
       p.err(new Error(message || 'failed'));
+    },
+    action(json) {
+      let a;
+      try {
+        a = typeof json === 'string' ? JSON.parse(json) : json;
+      } catch {
+        return;
+      }
+      for (const fn of actions) fn(a);
+    },
+    back() {
+      return window.__swxBack ? window.__swxBack() : false;
     },
     event(json) {
       let ev;
@@ -51,6 +64,10 @@ function nativeChannel(post) {
       listeners.add(fn);
       return () => listeners.delete(fn);
     },
+    onAction(fn) {
+      actions.add(fn);
+      return () => actions.delete(fn);
+    },
   };
 }
 
@@ -69,9 +86,9 @@ function createNativeBridge(kind, post) {
       folders: true,
       photos: mobile,
       drop: false,
-      scan: mobile,
+      scan: mobile && !!navigator.mediaDevices?.getUserMedia,
       reveal: false,
-      saveDir: kind === 'android',
+      saveDir: true,
       share: mobile,
       tray: false,
     },
@@ -80,15 +97,17 @@ function createNativeBridge(kind, post) {
       return unwrap(res);
     },
     on: ch.on,
+    onAction: ch.onAction,
+    ready: () => ch.send('ready'),
     pick: (what) => ch.send('pick', { what }),
-    pickDir: () => ch.send('pickDir').then((r) => r?.path ?? null),
+    pickDir: () => ch.send('pickDir'),
     clipboard: {
       read: () => ch.send('clipboardRead').then((r) => r?.text ?? ''),
       write: (text) => ch.send('clipboardWrite', { text }),
     },
     open: (path) => ch.send('open', { path }),
     reveal: (path) => ch.send('open', { path }),
-    scan: () => ch.send('scan').then((r) => r?.text ?? null),
+    scan: null,
     openUrl: (url) => ch.send('openUrl', { url }),
   };
 }

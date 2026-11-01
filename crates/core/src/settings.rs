@@ -23,6 +23,10 @@ pub struct Settings {
     pub name: String,
     /// Empty = the platform default (Downloads/SweaxDrop, or the gallery on phones).
     pub save_dir: String,
+    /// Phones: a folder the host app manages (Android SAF tree URI); empty
+    /// means Downloads/SweaxDrop plus the gallery for photos and videos.
+    pub save_uri: String,
+    pub save_label: String,
     pub receive: ReceiveMode,
     pub auto_accept_trusted: bool,
     /// Copy text received from trusted devices straight to the clipboard.
@@ -46,6 +50,8 @@ pub struct Settings {
     pub lang: String,
     pub start_with_windows: bool,
     pub close_to_tray: bool,
+    /// Phones: keep a quiet notification so files can arrive while closed.
+    pub stay_ready: bool,
 }
 
 pub const DEFAULT_PORT: u16 = 47470;
@@ -55,6 +61,8 @@ impl Default for Settings {
         Self {
             name: String::new(),
             save_dir: String::new(),
+            save_uri: String::new(),
+            save_label: String::new(),
             receive: ReceiveMode::Everyone,
             auto_accept_trusted: true,
             copy_text: false,
@@ -74,6 +82,7 @@ impl Default for Settings {
             lang: String::new(),
             start_with_windows: false,
             close_to_tray: true,
+            stay_ready: false,
         }
     }
 }
