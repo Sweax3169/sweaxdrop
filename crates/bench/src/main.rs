@@ -235,7 +235,12 @@ fn median(mut v: Vec<f64>) -> f64 {
 
 #[allow(clippy::too_many_arguments)]
 fn loopback_case(case: &str, paths: &[PathBuf], bytes: u64, streams: u8, tr: Transport, cipher: CipherPref, chunk_mib: u32, disk: bool, repeat: u32) -> Result<Run> {
-    let save = std::env::temp_dir().join(format!("swx-bench-inbox-{}", std::process::id()));
+    // SWX_BENCH_INBOX puts received files on a chosen drive (same as the
+    // LocalSend runs, so both write to the same disk).
+    let save = std::env::var_os("SWX_BENCH_INBOX")
+        .map(PathBuf::from)
+        .unwrap_or_else(std::env::temp_dir)
+        .join(format!("swx-bench-inbox-{}", std::process::id()));
     let a = host("bench-a", 0, cipher, false, None)?;
     let b = host("bench-bb", 0, cipher, !disk, Some(&save))?;
     pair(&a, &b);

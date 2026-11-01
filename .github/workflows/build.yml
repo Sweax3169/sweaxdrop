@@ -79,9 +79,9 @@ jobs:
         with: { distribution: temurin, java-version: 21 }
       - run: cargo install cargo-ndk --locked
       - name: Build the core for Android
-        run: cargo ndk -t arm64-v8a -t x86_64 -P 29 -o apps/android/app/src/main/jniLibs build --release -p sweaxdrop-ffi
-        env:
-          ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_LATEST_HOME }}
+        run: |
+          export ANDROID_NDK_HOME="$ANDROID_NDK_LATEST_HOME"
+          cargo ndk -t arm64-v8a -t x86_64 -P 29 -o apps/android/app/src/main/jniLibs build --release -p sweaxdrop-ffi
       - name: Keystore
         if: env.KS_B64 != ''
         run: echo "$KS_B64" | base64 -d > ${{ runner.temp }}/release.jks
@@ -144,12 +144,14 @@ jobs:
   release:
     name: Release
     if: startsWith(github.ref, 'refs/tags/v')
+    # The Android APK is signed with the release key on the maintainer's
+    # machine and added to the release separately (no signing key in CI).
     needs: [core, windows, android, ios]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
-        with: { path: dist, merge-multiple: true, pattern: '{windows,android,ios}' }
+        with: { path: dist, merge-multiple: true, pattern: '{windows,ios}' }
       - name: Checksums
         working-directory: dist
         run: sha256sum * | tee SHA256SUMS.txt
