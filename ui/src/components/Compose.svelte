@@ -10,7 +10,7 @@
 
   let mode = $state(startWith || 'menu');
   let text = $state('');
-  let area;
+  let area = $state();
 
   $effect(() => {
     if (mode === 'text') setTimeout(() => area?.focus(), 60);

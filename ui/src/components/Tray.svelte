@@ -23,7 +23,7 @@
   }
 </script>
 
-<section class="tray" class:full={app.staged.length > 0} class:over={over || (app.dragging && !app.dropTarget)} ondragover={onDragOver} ondragleave={() => (over = false)} ondrop={onDrop} role="region" aria-label={t('Ready to send')}>
+<section class="tray" class:full={app.staged.length > 0} class:over={over || (app.dragging && !app.dropTarget)} ondragover={onDragOver} ondragleave={() => (over = false)} ondrop={onDrop} aria-label={t('Ready to send')}>
   {#if app.staged.length}
     <div class="head">
       <div>

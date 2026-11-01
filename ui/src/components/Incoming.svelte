@@ -59,7 +59,7 @@
 
   {#if items.length}
     <ul class="files scroll">
-      {#each items.slice(0, 200) as it (it.id)}
+      {#each items.slice(0, 200) as it, i (it.id ?? i)}
         <li class:off={skip.has(it.id)}>
           <button class="check" class:on={!skip.has(it.id)} onclick={() => toggle(it.id)} aria-label={fileName(it.path)}>
             {#if !skip.has(it.id)}<Icon name="check" size={13} stroke={3} />{/if}

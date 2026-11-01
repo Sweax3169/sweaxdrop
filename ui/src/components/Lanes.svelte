@@ -10,7 +10,7 @@
   let wrap;
   let width = $state(300);
 
-  const state = { rates: [], last: [], lastT: 0, offsets: [], glow: 0, done: 0 };
+  const st = { rates: [], last: [], lastT: 0, offsets: [], glow: 0, done: 0 };
 
   function color(name) {
     return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#3553ff';
@@ -42,32 +42,32 @@
       ctx.clearRect(0, 0, w, h);
 
       const n = Math.max(1, lanes.length || 1);
-      const dt = state.lastT ? Math.min(0.1, (now - state.lastT) / 1000) : 0;
-      state.lastT = now;
+      const dt = st.lastT ? Math.min(0.1, (now - st.lastT) / 1000) : 0;
+      st.lastT = now;
 
       // Per-lane rate from the counters (smoothed so a 200 ms update cadence
       // does not make the flow stutter).
       for (let i = 0; i < n; i++) {
         const v = lanes[i] || 0;
-        if (state.last[i] === undefined) state.last[i] = { v, t: now };
-        if (v !== state.last[i].v) {
-          const r = ((v - state.last[i].v) / Math.max(1, now - state.last[i].t)) * 1000;
-          state.rates[i] = (state.rates[i] || 0) * 0.6 + Math.max(0, r) * 0.4;
-          state.last[i] = { v, t: now };
-        } else if (now - state.last[i].t > 700) {
-          state.rates[i] = (state.rates[i] || 0) * 0.9;
+        if (st.last[i] === undefined) st.last[i] = { v, t: now };
+        if (v !== st.last[i].v) {
+          const r = ((v - st.last[i].v) / Math.max(1, now - st.last[i].t)) * 1000;
+          st.rates[i] = (st.rates[i] || 0) * 0.6 + Math.max(0, r) * 0.4;
+          st.last[i] = { v, t: now };
+        } else if (now - st.last[i].t > 700) {
+          st.rates[i] = (st.rates[i] || 0) * 0.9;
         }
       }
       const moving = phase === 'running';
       const finished = phase === 'done';
-      state.glow += ((moving ? 1 : 0) - state.glow) * Math.min(1, dt * 6);
-      state.done += ((finished ? 1 : 0) - state.done) * Math.min(1, dt * 4);
+      st.glow += ((moving ? 1 : 0) - st.glow) * Math.min(1, dt * 6);
+      st.done += ((finished ? 1 : 0) - st.done) * Math.min(1, dt * 4);
 
       const gap = 5;
       const laneH = Math.max(3, Math.min(9, (h - gap * (n - 1)) / n));
       const usedH = laneH * n + gap * (n - 1);
       const top = (h - usedH) / 2;
-      const peak = Math.max(1, ...state.rates.slice(0, n));
+      const peak = Math.max(1, ...st.rates.slice(0, n));
       const progress = total > 0 ? Math.min(1, bytes / total) : 0;
 
       for (let i = 0; i < n; i++) {
@@ -80,25 +80,25 @@
         ctx.fill();
 
         // progress tint under the flow
-        ctx.globalAlpha = 0.18 + 0.82 * state.done;
+        ctx.globalAlpha = 0.18 + 0.82 * st.done;
         ctx.fillStyle = colors.accent;
         roundRect(ctx, 0, y, Math.max(laneH, w * (finished ? 1 : progress)), laneH, r);
         ctx.fill();
 
-        if (state.done > 0.98) continue;
+        if (st.done > 0.98) continue;
         // flowing chunks: speed ∝ this lane's share of the fastest lane
-        const rate = state.rates[i] || 0;
+        const rate = st.rates[i] || 0;
         const rel = moving ? rate / peak : 0;
         const pxPerSec = 40 + 260 * Math.min(1, rate / 40e6) * (0.55 + 0.45 * rel);
-        state.offsets[i] = ((state.offsets[i] || i * 23) + pxPerSec * dt * (moving ? 1 : 0)) % 46;
+        st.offsets[i] = ((st.offsets[i] || i * 23) + pxPerSec * dt * (moving ? 1 : 0)) % 46;
         const block = 22;
         const period = 46;
         ctx.save();
         roundRect(ctx, 0, y, w, laneH, r);
         ctx.clip();
-        for (let x = -period + state.offsets[i]; x < w; x += period) {
+        for (let x = -period + st.offsets[i]; x < w; x += period) {
           const fade = Math.min(1, Math.max(0, x / (w * 0.16))) * Math.min(1, Math.max(0, (w - x) / (w * 0.08)));
-          ctx.globalAlpha = (0.25 + 0.75 * state.glow) * (0.35 + 0.65 * fade) * (1 - state.done);
+          ctx.globalAlpha = (0.25 + 0.75 * st.glow) * (0.35 + 0.65 * fade) * (1 - st.done);
           ctx.fillStyle = colors.accent;
           roundRect(ctx, x, y, block, laneH, r);
           ctx.fill();

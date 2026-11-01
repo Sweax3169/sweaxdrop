@@ -27,7 +27,7 @@ function peers() {
   ];
 }
 
-const PHOTOS = Array.from({ length: 48 }, (_, i) => ({ path: `Camera/PXL_2026103${(i % 9) + 1}_${String(140211 + i * 37)}.jpg`, size: 2_400_000 + ((i * 7919) % 2_900_000) }));
+const PHOTOS = Array.from({ length: 48 }, (_, i) => ({ id: i, path: `Camera/PXL_2026103${(i % 9) + 1}_${String(140211 + i * 37)}.jpg`, size: 2_400_000 + ((i * 7919) % 2_900_000) }));
 
 function sampleHistory() {
   const t = now();
@@ -138,6 +138,7 @@ export function createMockBridge(q = new URLSearchParams()) {
   }
 
   function startSend(peer, items, text) {
+    items = items.map((it, i) => ({ ...it, id: i }));
     const t = {
       id: rid(), dir: 'send', peer: { id: peer.id, name: peer.name, platform: peer.platform, model: '', version: '1.0.0' }, phase: 'connecting',
       items, total: items.reduce((a, i) => a + i.size, 0), bytes: 0, speed: 0, peak: 0, filesDone: 0, lanes: [0, 0, 0, 0],
@@ -163,6 +164,7 @@ export function createMockBridge(q = new URLSearchParams()) {
   }
 
   function offerFrom(peer, items, text) {
+    items = items.map((it, i) => ({ ...it, id: i }));
     const t = {
       id: rid(), dir: 'receive', peer: { id: peer.id, name: peer.name, platform: peer.platform, model: '', version: '1.0.0' }, phase: 'asking',
       items, total: items.reduce((a, i) => a + i.size, 0), bytes: 0, speed: 0, peak: 0, filesDone: 0, lanes: [0, 0, 0, 0],
