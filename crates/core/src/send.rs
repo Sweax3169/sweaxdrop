@@ -88,6 +88,8 @@ struct Ctx {
     item_errors: mpsc::UnboundedSender<(u32, String)>,
     /// Recycled piece buffers: the writer returns them, readers reuse them.
     pool: Mutex<Vec<Vec<u8>>>,
+    /// Chunks still to write per source; a file counts as sent at zero.
+    left: Vec<AtomicU32>,
 }
 
 pub async fn run(shared: Arc<Shared>, job: SendJob) {
@@ -264,6 +266,17 @@ async fn attempt(shared: &Arc<Shared>, job: &SendJob, resume: bool, accepted_onc
         l.store(0, Ordering::Relaxed);
     }
 
+    let left: Vec<AtomicU32> = job.sources.iter().map(|_| AtomicU32::new(0)).collect();
+    for u in &units {
+        left[u.src].fetch_add(1, Ordering::Relaxed);
+    }
+    let already_files = job
+        .sources
+        .iter()
+        .enumerate()
+        .filter(|(i, s)| !s.item.dir && left[*i].load(Ordering::Relaxed) == 0)
+        .count() as u32;
+    t.files_done.store(already_files, Ordering::Relaxed);
     let (err_tx, mut err_rx) = mpsc::unbounded_channel();
     let ctx = Arc::new(Ctx {
         t: t.clone(),
@@ -273,6 +286,7 @@ async fn attempt(shared: &Arc<Shared>, job: &SendJob, resume: bool, accepted_onc
         platform: shared.platform.clone(),
         item_errors: err_tx,
         pool: Mutex::new(Vec::new()),
+        left,
     });
 
     let lanes = (streams.min(job.opts.streams).max(1) as usize).min(MAX_LANES);
@@ -313,6 +327,9 @@ async fn attempt(shared: &Arc<Shared>, job: &SendJob, resume: bool, accepted_onc
                             if offset < s.item.size || (s.item.size == 0 && index == 0) {
                                 let len = (s.item.size - offset).min(job.opts.chunk as u64) as u32;
                                 t.sub_bytes(len as u64);
+                                if ctx.left[si].fetch_add(1, Ordering::Relaxed) == 0 {
+                                    t.files_done.fetch_sub(1, Ordering::Relaxed);
+                                }
                                 ctx.queue.push_front(Unit { src: si, index, offset, len });
                                 if set.is_empty() {
                                     all_sent = false;
@@ -373,7 +390,7 @@ async fn attempt(shared: &Arc<Shared>, job: &SendJob, resume: bool, accepted_onc
 enum Piece {
     Header(ChunkHeader),
     Data(Vec<u8>, usize),
-    Trailer([u8; 32]),
+    Trailer([u8; 32], usize),
 }
 
 async fn run_lane(ctx: Arc<Ctx>, lane: usize, s: Stream) -> Result<()> {
@@ -394,7 +411,12 @@ async fn run_lane(ctx: Arc<Ctx>, lane: usize, s: Stream) -> Result<()> {
                     pool.push(buf);
                 }
             }
-            Piece::Trailer(h) => w.write_all(&h).await?,
+            Piece::Trailer(h, src) => {
+                w.write_all(&h).await?;
+                if ctx.left[src].fetch_sub(1, Ordering::Relaxed) == 1 {
+                    ctx.t.files_done.fetch_add(1, Ordering::Relaxed);
+                }
+            }
         }
     }
     w.write_all(&[TAG_END]).await?;
@@ -460,7 +482,7 @@ fn read_units(ctx: Arc<Ctx>, tx: mpsc::Sender<Piece>) {
             left -= n;
             off += n as u64;
         }
-        if tx.blocking_send(Piece::Trailer(*hasher.finalize().as_bytes())).is_err() {
+        if tx.blocking_send(Piece::Trailer(*hasher.finalize().as_bytes(), u.src)).is_err() {
             return;
         }
     }

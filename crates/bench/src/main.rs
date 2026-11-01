@@ -170,9 +170,11 @@ fn host(name: &str, port: u16, cipher: CipherPref, bench_sink: bool, save: Optio
     let _ = std::fs::remove_dir_all(&dir);
     let mut cfg = Config::new(dir.join("data"));
     cfg.discovery = false;
+    cfg.loopback = port == 0;
     cfg.port = if port == 0 { 41000 + (std::process::id() % 2000) as u16 * 4 + name.len() as u16 % 4 } else { port };
     cfg.default_name = name.into();
     cfg.bench_sink = bench_sink;
+    cfg.accept_all = true;
     let h = Host::start(cfg)?;
     let mut patch = json!({"cipher": cipher, "streams": 16, "keep_history": false});
     if let Some(p) = save {

@@ -116,8 +116,20 @@ function createTauriBridge() {
       for (const fn of dropFns) fn({ kind, paths: p.paths || [], pos });
     });
   }
+  const actionFns = new Set();
+  T.event.listen('send-paths', (e) => {
+    for (const fn of actionFns) fn({ type: 'stage', paths: e.payload || [] });
+  });
+  T.event.listen('ui-action', (e) => {
+    for (const fn of actionFns) fn({ type: e.payload });
+  });
   return {
     kind: 'tauri',
+    launchPaths: () => invoke('take_launch_paths'),
+    onAction(fn) {
+      actionFns.add(fn);
+      return () => actionFns.delete(fn);
+    },
     caps: { folders: true, photos: false, drop: true, scan: false, reveal: true, saveDir: true, share: false, tray: true },
     async call(cmd, args = {}) {
       const res = await invoke('core_call', { req: JSON.stringify({ cmd, ...args }) });

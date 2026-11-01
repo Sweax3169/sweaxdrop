@@ -44,6 +44,10 @@ pub struct Config {
     /// Benchmarks: accept everything and throw the bytes away.
     pub bench_sink: bool,
     pub tuning: SocketTuning,
+    /// Listen on 127.0.0.1 only.
+    pub loopback: bool,
+    /// Accept every offer without asking (headless receivers, benchmarks).
+    pub accept_all: bool,
 }
 
 impl Config {
@@ -58,6 +62,8 @@ impl Config {
             discovery: true,
             bench_sink: false,
             tuning: SocketTuning::default(),
+            loopback: false,
+            accept_all: false,
         }
     }
 }
@@ -295,7 +301,7 @@ impl Shared {
         if s.receive == ReceiveMode::Trusted && !trusted {
             return Decision::Decline("only accepts paired devices".into());
         }
-        if self.cfg.bench_sink || (trusted && s.auto_accept_trusted) {
+        if self.cfg.bench_sink || self.cfg.accept_all || (trusted && s.auto_accept_trusted) {
             return Decision::Accept { sink: self.default_sink(None), skip: vec![] };
         }
         let (tx, rx) = oneshot::channel();
@@ -431,10 +437,14 @@ impl Node {
             cfg,
         });
 
-        let listener = bind_tcp(want_port).await?;
+        // SWEAXDROP_LOOPBACK=1: tests and demos listen on 127.0.0.1 only
+        // (no firewall prompt, nothing reachable from the network).
+        let loopback = shared.cfg.loopback || std::env::var_os("SWEAXDROP_LOOPBACK").is_some();
+        let listener = if loopback { TcpListener::bind(("127.0.0.1", want_port)).await.or(TcpListener::bind(("127.0.0.1", 0)).await)? } else { bind_tcp(want_port).await? };
         let port = listener.local_addr()?.port();
         shared.port.store(port, Ordering::Relaxed);
-        match link::quic_endpoint(&shared.identity, shared.settings().cipher, SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), port))
+        let quic_bind = if loopback { SocketAddr::from(([127, 0, 0, 1], port)) } else { SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), port) };
+        match link::quic_endpoint(&shared.identity, shared.settings().cipher, quic_bind)
             .or_else(|_| link::quic_endpoint(&shared.identity, shared.settings().cipher, SocketAddr::from(([0, 0, 0, 0], port))))
         {
             Ok(ep) => {
@@ -446,7 +456,7 @@ impl Node {
         shared.rebuild_dialer()?;
         tokio::spawn(accept_tcp(shared.clone(), listener));
         tokio::spawn(ticker(shared.clone()));
-        if shared.cfg.discovery {
+        if shared.cfg.discovery && !loopback {
             crate::discovery::start(shared.clone());
         }
         tracing::info!("SweaxDrop {} listening on port {port}", shared.identity.id());

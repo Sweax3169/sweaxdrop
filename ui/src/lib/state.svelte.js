@@ -133,8 +133,15 @@ export async function init() {
   app.wide = mq.matches;
   mq.addEventListener('change', (e) => (app.wide = e.matches));
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => applyLook());
+  bridge.onAction?.((a) => {
+    if (a.type === 'stage' && a.paths?.length) stage(a.paths.map((p) => ({ path: p })));
+    if (a.type === 'pick-files') pick('files');
+    if (a.type === 'pair') app.sheet = { type: 'pair', peer: null };
+  });
   try {
     await refresh();
+    const launch = (await bridge.launchPaths?.()) || [];
+    if (launch.length) stage(launch.map((p) => ({ path: p })));
     app.ready = true;
   } catch (e) {
     app.error = String(e.message || e);

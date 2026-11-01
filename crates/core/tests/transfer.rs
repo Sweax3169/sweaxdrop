@@ -24,6 +24,7 @@ async fn node(name: &str) -> (Node, PathBuf) {
     let dir = tmp(name);
     let mut cfg = Config::new(dir.join("data"));
     cfg.discovery = false;
+    cfg.loopback = true;
     cfg.port = 0;
     cfg.default_name = name.to_string();
     // Port 0 in the config means "settings value"; give each node its own.
