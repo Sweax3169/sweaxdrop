@@ -9,20 +9,20 @@
    "what": "A long video or a disk image.",
    "what_tr": "Uzun bir video ya da disk kalıbı.",
    "sweaxdrop": {
-    "mb_s": 426.34356418394253,
+    "mb_s": 316.4047576690734,
     "seconds": 13.57428165,
     "ttfb_ms": 18.174599999999998,
     "runs": 4
    },
    "localsend": {
-    "mb_s": 318.7120906008598,
+    "mb_s": 316.8273214843903,
     "seconds": 13.556177149992436,
     "ttfb_ms": 39.534199982881546,
     "runs": 4,
     "tool": "localsend-cli-1.18.2"
    },
    "localsend_cli": {
-    "mb_s": 318.7120906008598,
+    "mb_s": 316.8273214843903,
     "seconds": 13.556177149992436,
     "ttfb_ms": 39.534199982881546,
     "runs": 4,
@@ -45,20 +45,20 @@
    "what": "A camera roll: 3–6 MB each.",
    "what_tr": "Bir galeri: her biri 3–6 MB.",
    "sweaxdrop": {
-    "mb_s": 1193.9882350895716,
+    "mb_s": 1190.5777866063238,
     "seconds": 0.6363197,
     "ttfb_ms": 21.859949999999998,
     "runs": 4
    },
    "localsend": {
-    "mb_s": 247.5269887879853,
+    "mb_s": 245.95058610675707,
     "seconds": 3.080245150020346,
     "ttfb_ms": 63.361600012285635,
     "runs": 4,
     "tool": "localsend-cli-1.18.2"
    },
    "localsend_cli": {
-    "mb_s": 247.5269887879853,
+    "mb_s": 245.95058610675707,
     "seconds": 3.080245150020346,
     "ttfb_ms": 63.361600012285635,
     "runs": 4,
@@ -75,13 +75,13 @@
    "what": "A project folder or a chat export: 1–64 KB each, in 100 folders.",
    "what_tr": "Bir proje klasörü ya da sohbet dışa aktarımı: her biri 1–64 KB, 100 klasörde.",
    "sweaxdrop": {
-    "mb_s": 71.60576671912736,
+    "mb_s": 63.32349442147489,
     "seconds": 5.23863825,
     "ttfb_ms": 29.65635,
     "runs": 4
    },
    "localsend": {
-    "mb_s": 22.5076588138509,
+    "mb_s": 21.237380943535737,
     "seconds": 15.620046600000933,
     "ttfb_ms": 178.63620002754033,
     "runs": 4,
@@ -89,7 +89,7 @@
    },
    "localsend_cli": null,
    "localsend_proto": {
-    "mb_s": 22.5076588138509,
+    "mb_s": 21.237380943535737,
     "seconds": 15.620046600000933,
     "ttfb_ms": 178.63620002754033,
     "runs": 4,
@@ -105,27 +105,27 @@
    "what": "The same kind of files, few enough for LocalSend’s own command-line sender.",
    "what_tr": "Aynı türde dosyalar; LocalSend’in kendi komut satırı göndericisine sığacak kadar az.",
    "sweaxdrop": {
-    "mb_s": 75.77073859092148,
+    "mb_s": 75.13785943743633,
     "seconds": 0.12763000000000002,
     "ttfb_ms": 16.796,
     "runs": 4
    },
    "localsend": {
-    "mb_s": 22.332424300763215,
+    "mb_s": 22.332368299213805,
     "seconds": 0.4294145999883767,
     "ttfb_ms": 128.76439999672584,
     "runs": 4,
     "tool": "localsend-cli-1.18.2 receiver, LocalSend v2 sender (2 at a time)"
    },
    "localsend_cli": {
-    "mb_s": 8.922515362386486,
+    "mb_s": 5.749449739151601,
     "seconds": 1.6679587499820627,
     "ttfb_ms": 73.04814999224618,
     "runs": 4,
     "tool": "localsend-cli-1.18.2"
    },
    "localsend_proto": {
-    "mb_s": 22.332424300763215,
+    "mb_s": 22.332368299213805,
     "seconds": 0.4294145999883767,
     "ttfb_ms": 128.76439999672584,
     "runs": 4,
@@ -137,14 +137,14 @@
  ],
  "cross_check": {
   "300 small files": {
-   "mb_s": 22.332424300763215,
+   "mb_s": 22.332368299213805,
    "seconds": 0.4294145999883767,
    "ttfb_ms": 128.76439999672584,
    "runs": 4,
    "tool": "localsend-cli-1.18.2 receiver, LocalSend v2 sender (2 at a time)"
   },
   "10 000 small files (338 MB)": {
-   "mb_s": 22.5076588138509,
+   "mb_s": 21.237380943535737,
    "seconds": 15.620046600000933,
    "ttfb_ms": 178.63620002754033,
    "runs": 4,

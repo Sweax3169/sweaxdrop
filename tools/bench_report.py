@@ -31,7 +31,9 @@ def load():
     sx = {}
     for k, rs in sx_runs.items():
         sx[k] = {
-            'mb_s': statistics.median(x['mb_s'] for x in rs),
+            # Throughput follows from the median time: with an even number of
+            # runs a separate median of MB/s would not match that time.
+            'mb_s': rs[0]['bytes'] / statistics.median(x['seconds'] for x in rs) / 1e6,
             'seconds': statistics.median(x['seconds'] for x in rs),
             'ttfb_ms': statistics.median(x['ttfb_ms'] for x in rs),
             'runs': len(rs),
@@ -48,7 +50,7 @@ def load():
                 continue
             (ls_cli if r['tool'] == 'localsend-cli-1.18.2' else ls_proto).setdefault(r['case'], []).append(r)
     med = lambda rs: {
-        'mb_s': statistics.median(x['mb_s'] for x in rs),
+        'mb_s': rs[0]['bytes'] / statistics.median(x['seconds'] for x in rs) / 1e6,
         'seconds': statistics.median(x['seconds'] for x in rs),
         'ttfb_ms': statistics.median(x['ttfb_ms'] for x in rs),
         'runs': len(rs),

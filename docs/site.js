@@ -129,8 +129,11 @@ fetch('data/bench.json')
   })
   .catch(() => {});
 
+// Turkish writes decimals with a comma.
+const num = (x, d) => (lang === 'tr' ? x.toFixed(d).replace('.', ',') : x.toFixed(d));
+
 function fmtTime(s) {
-  return s < 1 ? `${(s * 1000).toFixed(0)} ms` : s < 60 ? `${s.toFixed(s < 10 ? 2 : 1)} s` : `${Math.floor(s / 60)} min ${Math.round(s % 60)} s`;
+  return s < 1 ? `${(s * 1000).toFixed(0)} ms` : s < 60 ? `${num(s, s < 10 ? 2 : 1)} s` : `${Math.floor(s / 60)} ${lang === 'tr' ? 'dk' : 'min'} ${Math.round(s % 60)} s`;
 }
 
 function renderBench() {
@@ -146,7 +149,7 @@ function renderBench() {
       <div class="what">${lang === 'tr' ? c.what_tr : c.what}</div>
       <div class="row sx"><span>SweaxDrop ${bench.version}</span><div class="bar"><i data-w="${(c.sweaxdrop.mb_s / max) * 100}"></i></div><span class="val">${c.sweaxdrop.mb_s.toFixed(0)} MB/s · ${fmtTime(c.sweaxdrop.seconds)}</span></div>
       <div class="row ls"><span>LocalSend 1.18.2</span><div class="bar"><i data-w="${(c.localsend.mb_s / max) * 100}"></i></div><span class="val">${c.localsend.mb_s.toFixed(0)} MB/s · ${fmtTime(c.localsend.seconds)}</span></div>
-      <div class="ratio">${c.ratio >= 1.05 ? t(`${c.ratio.toFixed(1)}× faster`, `${c.ratio.toFixed(1)} kat hızlı`) : c.ratio <= 0.95 ? t(`${(1 / c.ratio).toFixed(1)}× slower`, `${(1 / c.ratio).toFixed(1)} kat yavaş`) : t('about the same', 'yaklaşık aynı')}</div>`;
+      <div class="ratio">${c.ratio >= 1.05 ? t(`${num(c.ratio, 1)}× faster`, `${num(c.ratio, 1)} kat hızlı`) : c.ratio <= 0.95 ? t(`${num(1 / c.ratio, 1)}× slower`, `${num(1 / c.ratio, 1)} kat yavaş`) : t('about the same', 'yaklaşık aynı')}</div>`;
     el.appendChild(div);
     requestAnimationFrame(() => setTimeout(() => div.querySelectorAll('i').forEach((i) => (i.style.width = i.dataset.w + '%')), 60));
   }
